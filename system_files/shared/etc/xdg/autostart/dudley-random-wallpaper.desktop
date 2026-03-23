@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Dudley Random Wallpaper
+Comment=Apply a random Dudley wallpaper at user login
+Exec=/usr/bin/dudley-random-wallpaper
+OnlyShowIn=GNOME;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5

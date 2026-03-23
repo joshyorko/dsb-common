@@ -1,0 +1,8 @@
+# cosign public key for verifying dsb-common OCI layer signatures.
+# Replace the placeholder below with the actual public key after running:
+#   cosign generate-key-pair
+# Then add the private key as SIGNING_SECRET in repository secrets.
+
+# -----BEGIN PUBLIC KEY-----
+# <paste your cosign public key here>
+# -----END PUBLIC KEY-----

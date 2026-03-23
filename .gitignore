@@ -1,0 +1,18 @@
+# Build artifacts and cache
+*.tar
+*.tar.gz
+*.img
+*.iso
+*.qcow2
+*.raw
+
+# Editor and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
