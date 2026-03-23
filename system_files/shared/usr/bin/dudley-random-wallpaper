@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Pick and apply a random Dudley wallpaper for the current GNOME session.
+set -euo pipefail
+
+readonly WALLPAPER_DIR="/usr/share/backgrounds/dudley"
+readonly RETRY_COUNT="${DUDLEY_WALLPAPER_RETRY_COUNT:-5}"
+readonly RETRY_DELAY_SECONDS="${DUDLEY_WALLPAPER_RETRY_DELAY_SECONDS:-2}"
+readonly STATE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/dudley/last-wallpaper"
+
+log() {
+	echo "[dudley-random-wallpaper] $*"
+}
+
+if ! command -v gsettings >/dev/null 2>&1; then
+	log "gsettings not found; skipping wallpaper selection"
+	exit 0
+fi
+
+if [[ ! -d "$WALLPAPER_DIR" ]]; then
+	log "Wallpaper directory not found: $WALLPAPER_DIR"
+	exit 0
+fi
+
+mapfile -d '' WALLPAPERS < <(
+	find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+		\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) \
+		-print0
+)
+
+if ((${#WALLPAPERS[@]} == 0)); then
+	log "No wallpapers found in $WALLPAPER_DIR"
+	exit 0
+fi
+
+SELECTED_WALLPAPER="${WALLPAPERS[$((RANDOM % ${#WALLPAPERS[@]}))]}"
+LAST_WALLPAPER=""
+
+if [[ -f "$STATE_FILE" ]]; then
+	LAST_WALLPAPER="$(cat "$STATE_FILE" 2>/dev/null || true)"
+fi
+
+# Avoid immediate repeats when we have more than one wallpaper.
+if ((${#WALLPAPERS[@]} > 1)) && [[ -n "$LAST_WALLPAPER" ]]; then
+	for ((pick_attempt = 1; pick_attempt <= 10; pick_attempt++)); do
+		if [[ "$SELECTED_WALLPAPER" != "$LAST_WALLPAPER" ]]; then
+			break
+		fi
+		SELECTED_WALLPAPER="${WALLPAPERS[$((RANDOM % ${#WALLPAPERS[@]}))]}"
+	done
+fi
+
+SELECTED_URI="file://$SELECTED_WALLPAPER"
+
+for ((attempt = 1; attempt <= RETRY_COUNT; attempt++)); do
+	if gsettings set org.gnome.desktop.background picture-uri "$SELECTED_URI" &&
+		gsettings set org.gnome.desktop.background picture-uri-dark "$SELECTED_URI"; then
+		mkdir -p "$(dirname "$STATE_FILE")" || true
+		printf '%s\n' "$SELECTED_WALLPAPER" >"$STATE_FILE" || true
+		log "Selected wallpaper: $SELECTED_URI"
+		exit 0
+	fi
+
+	sleep "$RETRY_DELAY_SECONDS"
+done
+
+log "Failed to set wallpaper after $RETRY_COUNT attempts"
+exit 0
