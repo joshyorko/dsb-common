@@ -22,6 +22,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
   IMAGE_NAME: dsb-common
+  COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
 jobs:
   build_push:
@@ -89,13 +90,12 @@ jobs:
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
-        if: github.event_name != 'pull_request' && secrets.SIGNING_SECRET != ''
+        if: github.event_name != 'pull_request' && env.COSIGN_PRIVATE_KEY != ''
 
       - name: Sign container image
-        if: github.event_name != 'pull_request' && secrets.SIGNING_SECRET != ''
+        if: github.event_name != 'pull_request' && env.COSIGN_PRIVATE_KEY != ''
         run: |
           cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@${TAGS}
         env:
           TAGS: ${{ steps.push.outputs.digest }}
           COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
