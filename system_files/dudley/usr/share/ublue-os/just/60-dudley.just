@@ -154,3 +154,9 @@ dudley-vscode-all:
     set -euo pipefail
     ujust dudley-vscode-insiders
     ujust dudley-vscode-extensions
+
+[group('Dudley')]
+dudley-build-info:
+    #!/usr/bin/bash
+    set -euo pipefail
+    /usr/bin/dudley-build-info
