@@ -1,6 +1,6 @@
 [org.gnome.desktop.background]
-picture-uri='file:///usr/share/backgrounds/dudley/dudley-1.png'
-picture-uri-dark='file:///usr/share/backgrounds/dudley/dudley-1.png'
+picture-uri='file:///usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png'
+picture-uri-dark='file:///usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png'
 picture-options='stretched'
 color-shading-type='solid'
 primary-color='#000000'
