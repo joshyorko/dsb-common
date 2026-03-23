@@ -100,6 +100,19 @@ dudley-brews-list:
 
 # Install VS Code Insiders extensions from list
 [group('Dudley')]
+dudley-vscode-insiders:
+    #!/usr/bin/bash
+    set -euo pipefail
+    INSTALLER="/usr/libexec/dudley/install-vscode-insiders.sh"
+
+    if [ -x "$INSTALLER" ]; then
+        "$INSTALLER"
+    else
+        echo "ERROR: $INSTALLER not found"
+        exit 1
+    fi
+
+[group('Dudley')]
 dudley-vscode-extensions:
     #!/usr/bin/bash
     set -euo pipefail
@@ -134,3 +147,10 @@ dudley-vscode-extensions:
     echo "✓ Extensions installed: $installed"
     [ "$failed" -gt 0 ] && echo "⚠ Extensions failed: $failed"
     echo "Done!"
+
+[group('Dudley')]
+dudley-vscode-all:
+    #!/usr/bin/bash
+    set -euo pipefail
+    ujust dudley-vscode-insiders
+    ujust dudley-vscode-extensions
