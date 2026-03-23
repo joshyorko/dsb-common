@@ -27,13 +27,16 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 
 - `usr/bin/dudley-random-wallpaper`
 - `etc/xdg/autostart/dudley-random-wallpaper.desktop`
+- `etc/flatpak/preinstall.d/dudley-*.preinstall`
 - `usr/share/backgrounds/dudley/*`
 - `usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override`
+- `usr/share/ublue-os/homebrew/dudley-*.Brewfile`
 - `usr/share/ublue-os/just/60-dudley.just`
+- `usr/share/ublue-os/vscode-extensions.list`
 
 The Dudley wallpaper photos from `joshyorko/dudleys-second-bedroom/custom_wallpapers` are bundled here so the wallpaper switcher works without consumer repos carrying duplicate image assets.
 
-When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, wallpapers, and setup assets in `dudley/`.
+When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, wallpapers, Brewfiles, Flatpak manifests, VS Code extension opinion, and setup assets in `dudley/`.
 
 ## Consumer Pattern
 
