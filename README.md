@@ -27,10 +27,13 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 
 - `usr/bin/dudley-random-wallpaper`
 - `etc/xdg/autostart/dudley-random-wallpaper.desktop`
+- `usr/share/backgrounds/dudley/*`
 - `usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override`
 - `usr/share/ublue-os/just/60-dudley.just`
 
-When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, and setup assets in `dudley/`.
+The Dudley wallpaper photos from `joshyorko/dudleys-second-bedroom/custom_wallpapers` are bundled here so the wallpaper switcher works without consumer repos carrying duplicate image assets.
+
+When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, wallpapers, and setup assets in `dudley/`.
 
 ## Consumer Pattern
 
@@ -63,7 +66,7 @@ The repository ships only the minimal workflow needed to build and publish the O
 
 - Pull requests to `main` build the image for validation.
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
-- Published images are signed with cosign using the `SIGNING_SECRET` repository secret.
+- If `SIGNING_SECRET` is configured, published images are also signed with cosign.
 
 The public verification key is stored in `cosign.pub`.
 
@@ -78,6 +81,8 @@ For forks:
 1. Run `cosign generate-key-pair`.
 2. Add `cosign.key` as the `SIGNING_SECRET` repository secret.
 3. Replace `cosign.pub` with the matching public key.
+
+If you have not configured signing yet, the publish workflow still builds and publishes the layer and skips the signing step.
 
 ## Scope Guardrails
 
