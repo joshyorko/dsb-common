@@ -5,6 +5,7 @@
 *.iso
 *.qcow2
 *.raw
+cosign.key
 
 # Editor and IDE files
 .idea/
