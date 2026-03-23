@@ -1,124 +1,71 @@
 # dsb-common
 
-Shared OCI common layer for Dudley-related images. This repository is the single source of truth for configuration files shared across all DSB (Dudley's Second Bedroom) images.
+`dsb-common` publishes a narrow shared OCI layer for Dudley-related images. It is modeled after [projectbluefin/common](https://github.com/projectbluefin/common), uses [joshyorko/dudleys-second-bedroom](https://github.com/joshyorko/dudleys-second-bedroom) as migration source material, and is consumed by [joshyorko/dudley-os](https://github.com/joshyorko/dudley-os).
 
-This repository is modeled after [projectbluefin/common](https://github.com/projectbluefin/common) and is consumed by [joshyorko/dudley-os](https://github.com/joshyorko/dudley-os).
+This repository is intentionally limited to shared layer content. It does not own final OS assembly, qcow2/ISO creation, product-image build orchestration, or final image verification.
 
-> **Scope**: This repo provides only the common OCI layer. It is **not** responsible for final OS assembly, qcow2/ISO creation, or product image workflows — those live in consuming repos like `dudley-os`.
+## Published Layer Contract
 
----
+The image published to `ghcr.io/joshyorko/dsb-common` exports exactly two namespaced paths:
 
-## Directory Structure
+- `/system_files/shared`
+- `/system_files/dudley`
 
-This repository organizes configuration files into two main directories:
+Consumers should copy from those paths explicitly rather than assuming flattened `/usr` or `/etc` paths inside the OCI layer.
 
-### `system_files/shared/` — Cross-Image Content
+## Repository Layout
 
-Files that are image-agnostic and can be reused by any Dudley-related image:
+### `system_files/shared/`
 
-- **Wallpaper randomizer** — `usr/bin/dudley-random-wallpaper` picks a random wallpaper from `/usr/share/backgrounds/dudley/` at login
-- **Autostart entry** — `etc/xdg/autostart/dudley-random-wallpaper.desktop` triggers the randomizer on GNOME login
-- **GSettings schema override** — `usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override` sets the default background
-- **Just recipes** — `usr/share/ublue-os/just/60-custom.just` provides shared `ujust` commands (JetBrains Toolbox, OpenTabletDriver, etc.)
-- **Background placeholder** — `usr/share/backgrounds/dudley/` is the target directory for wallpaper assets placed at build time
+Cross-image reusable content that is not Dudley-branded. Current examples:
 
-### `system_files/dudley/` — Dudley Opinion
+- `usr/share/ublue-os/just/60-custom.just`
 
-Files specific to the Dudley image flavour. Consuming images that want the full Dudley experience copy from here:
+### `system_files/dudley/`
 
-- **Dudley just recipes** — `usr/share/ublue-os/just/60-dudley.just` contains Dudley-branded `ujust` commands (brew installs, VS Code extensions)
-- **Wallpaper placeholder** — `usr/share/backgrounds/dudley/` staging directory for Dudley-specific wallpapers
+Dudley-opinionated content that should follow the Dudley flavor across consuming images. Current examples:
 
-**When adding new files:** Place in `dudley/` if Dudley-opinionated (branding, specific defaults), otherwise use `shared/`.
+- `usr/bin/dudley-random-wallpaper`
+- `etc/xdg/autostart/dudley-random-wallpaper.desktop`
+- `usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override`
+- `usr/share/ublue-os/just/60-dudley.just`
 
----
+When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, and setup assets in `dudley/`.
 
-## Usage in a Containerfile
+## Consumer Pattern
 
-Reference this layer as a build stage and copy the directories you need.
-
-### Copy everything (full Dudley experience)
-
-```dockerfile
-FROM ghcr.io/joshyorko/dsb-common:latest AS dsb-common
-
-# Copy all system files (shared + dudley)
-COPY --from=dsb-common /system_files/shared /
-COPY --from=dsb-common /system_files/dudley /
-```
-
-### Copy only shared (image-agnostic, no Dudley opinion)
-
-```dockerfile
-FROM ghcr.io/joshyorko/dsb-common:latest AS dsb-common
-
-# Copy only the cross-image shared layer
-COPY --from=dsb-common /system_files/shared /
-```
-
-### Copy only Dudley opinion
-
-```dockerfile
-FROM ghcr.io/joshyorko/dsb-common:latest AS dsb-common
-
-# Copy only Dudley-specific overrides
-COPY --from=dsb-common /system_files/dudley /
-```
-
-### As part of a multi-stage ctx build (dudley-os pattern)
+`dudley-os` is the product repo and should consume this layer by copying the namespaced directories in order.
 
 ```dockerfile
 FROM scratch AS ctx
 
-# Pull in dsb-common alongside other OCI layers
-COPY --from=ghcr.io/joshyorko/dsb-common:latest /system_files /oci/dsb-common
-
-# ... other layers ...
+COPY --from=ghcr.io/joshyorko/dsb-common:latest /system_files /ctx/oci/dsb-common/system_files
+COPY --from=ghcr.io/projectbluefin/common:latest / /ctx/oci/bluefin-common
 
 FROM ghcr.io/ublue-os/silverblue-main:latest
 
-RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-    --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/tmp \
-    # Copy shared content into the image filesystem
-    cp -r /ctx/oci/dsb-common/system_files/shared/. / && \
+RUN cp -r /ctx/oci/dsb-common/system_files/shared/. / && \
+    cp -r /ctx/oci/bluefin-common/. / && \
     cp -r /ctx/oci/dsb-common/system_files/dudley/. / && \
-    /ctx/build/10-build.sh
+    cp -r /ctx/local-product-files/. /
 ```
 
----
+Intended copy precedence:
 
-## GitHub Actions
+1. `dsb-common/shared`
+2. `projectbluefin/common`
+3. `dsb-common/dudley`
+4. local product files from the consumer repo
 
-### Build and Publish (`build.yml`)
+## Build and Publish
 
-Triggers on:
-- Push to `main`
-- Pull requests targeting `main`
-- Manual dispatch (`workflow_dispatch`)
+The repository ships only the minimal workflow needed to build and publish the OCI layer.
 
-Publishes the OCI layer to `ghcr.io/joshyorko/dsb-common` with the following tags:
+- Pull requests to `main` build the image for validation.
+- Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
+- Published images are signed with cosign using the `SIGNING_SECRET` repository secret.
 
-| Tag | Description |
-|-----|-------------|
-| `latest` | Most recent push to `main` |
-| `YYYYMMDD` | Date-stamped build |
-| `<sha7>` | Short commit SHA |
-| `pr-N` | Pull request builds (not pushed) |
-
-Images are signed with [cosign](https://github.com/sigstore/cosign) using a repository secret (`SIGNING_SECRET`).
-
-### Monthly Release (`release.yml`)
-
-Runs on the 1st of every month and creates a versioned GitHub release tagged `vYYYY.MM`.
-
----
-
-## Cosign / Image Verification
-
-The public key used to verify signed images is stored at `cosign.pub` in this repository.
-
-### Verify a published image
+The public verification key is stored in `cosign.pub`.
 
 ```bash
 cosign verify \
@@ -126,31 +73,14 @@ cosign verify \
   ghcr.io/joshyorko/dsb-common:latest
 ```
 
-### Setting up signing for your fork
+For forks:
 
-1. Generate a cosign key pair:
-   ```bash
-   cosign generate-key-pair
-   ```
-2. Add the contents of `cosign.key` as a repository secret named `SIGNING_SECRET`.
-3. Replace `cosign.pub` in the repository with your public key.
+1. Run `cosign generate-key-pair`.
+2. Add `cosign.key` as the `SIGNING_SECRET` repository secret.
+3. Replace `cosign.pub` with the matching public key.
 
----
+## Scope Guardrails
 
-## Contributing
-
-- Keep this repo intentionally narrow — shared layer content only
-- Do **not** add OS assembly, ISO/qcow2, or product image logic here
-- New shared files go in `system_files/shared/`
-- New Dudley-opinionated files go in `system_files/dudley/`
-- Follow existing file naming conventions
-
----
-
-## Related Repositories
-
-| Repository | Role |
-|------------|------|
-| [joshyorko/dudley-os](https://github.com/joshyorko/dudley-os) | Primary consumer of this layer |
-| [joshyorko/dudleys-second-bedroom](https://github.com/joshyorko/dudleys-second-bedroom) | Reference source for Dudley content |
-| [projectbluefin/common](https://github.com/projectbluefin/common) | Upstream architectural inspiration |
+- Keep this repo focused on the shared OCI layer.
+- Do not add product-image identity, qcow2/ISO flows, or final assembly logic here.
+- Do not move product-only logic out of `dudley-os` unless it is truly shared-layer content.
