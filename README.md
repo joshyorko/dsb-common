@@ -30,6 +30,7 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 - `etc/flatpak/preinstall.d/dudley-*.preinstall`
 - `usr/share/backgrounds/dudley/*`
 - `usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override`
+- `usr/bin/dudley-build-info`
 - `usr/share/ublue-os/homebrew/dudley-*.Brewfile`
 - `usr/share/ublue-os/just/60-dudley.just`
 - `usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh`
@@ -38,6 +39,8 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 The Dudley wallpaper photos from `joshyorko/dudleys-second-bedroom/custom_wallpapers` are bundled here so the wallpaper switcher works without consumer repos carrying duplicate image assets.
 
 When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, wallpapers, Brewfiles, Flatpak manifests, VS Code Insiders Homebrew opinion, VS Code extension opinion, and setup assets in `dudley/`.
+
+`dudley-build-info` is shipped from this repo as a Dudley-facing diagnostic command. Consuming repos are responsible for generating `/etc/dudley/build-manifest.json` during final assembly so the command has image metadata to display.
 
 ## Consumer Pattern
 

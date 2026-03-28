@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MANIFEST_PATH="/etc/dudley/build-manifest.json"
+
+usage() {
+    cat <<'USAGE'
+Usage: dudley-build-info [OPTIONS]
+
+Display build information for this Dudley image.
+
+OPTIONS:
+    --json, -j      Output raw JSON manifest
+    --help, -h      Show this help message
+
+MANIFEST LOCATION:
+    /etc/dudley/build-manifest.json
+USAGE
+}
+
+display_formatted() {
+    local manifest_path="$1"
+
+    if [[ ! -f "$manifest_path" ]]; then
+        echo "Error: Build manifest not found at $manifest_path" >&2
+        echo "This image is missing Dudley build metadata from final assembly." >&2
+        exit 1
+    fi
+
+    if ! command -v jq >/dev/null 2>&1; then
+        echo "Error: jq is required but not found" >&2
+        exit 1
+    fi
+
+    local build_date build_image base_image git_commit
+    build_date=$(jq -r '.build.date // "unknown"' "$manifest_path")
+    build_image=$(jq -r '.build.image // "unknown"' "$manifest_path")
+    base_image=$(jq -r '.build.base // "unknown"' "$manifest_path")
+    git_commit=$(jq -r '.build.commit // "unknown"' "$manifest_path")
+
+    cat <<EOF
+Build Information:
+  Date:   $build_date
+  Image:  $build_image
+  Base:   $base_image
+  Commit: $git_commit
+EOF
+
+    if jq -e '.hooks' "$manifest_path" >/dev/null 2>&1; then
+        echo ""
+        echo "Content Versions:"
+
+        local hook_names=()
+        mapfile -t hook_names < <(jq -r '.hooks | keys[]' "$manifest_path" 2>/dev/null | sort)
+
+        for hook in "${hook_names[@]}"; do
+            local version deps_count
+            version=$(jq -r ".hooks[\"$hook\"].version // \"unknown\"" "$manifest_path")
+            deps_count=$(jq -r ".hooks[\"$hook\"].dependencies | length // 0" "$manifest_path")
+            printf "  %-20s %s (%d dependencies)\n" "$hook:" "$version" "$deps_count"
+        done
+    fi
+}
+
+display_json() {
+    local manifest_path="$1"
+
+    if [[ ! -f "$manifest_path" ]]; then
+        echo "{\"error\":\"Manifest not found\",\"path\":\"$manifest_path\"}" >&2
+        exit 1
+    fi
+
+    if command -v jq >/dev/null 2>&1; then
+        jq . "$manifest_path"
+    else
+        cat "$manifest_path"
+    fi
+}
+
+main() {
+    local output_mode="formatted"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --json|-j)
+                output_mode="json"
+                shift
+                ;;
+            --help|-h)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "Error: Unknown option: $1" >&2
+                echo "Use --help for usage information" >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    case "$output_mode" in
+        json) display_json "$MANIFEST_PATH" ;;
+        formatted) display_formatted "$MANIFEST_PATH" ;;
+    esac
+}
+
+main "$@"
