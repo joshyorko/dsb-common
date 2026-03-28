@@ -6,6 +6,9 @@ tap "joshyorko/tools"
 # RCC - Robocorp Control Center CLI for RPA automation
 cask "joshyorko/tools/rcc"
 
+# VS Code Insiders
+cask "joshyorko/tools/vscode-insiders-linux"
+
 # Configuration management
 brew "ansible"
 
