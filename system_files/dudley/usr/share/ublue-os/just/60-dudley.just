@@ -103,14 +103,9 @@ dudley-brews-list:
 dudley-vscode-insiders:
     #!/usr/bin/bash
     set -euo pipefail
-    INSTALLER="/usr/libexec/dudley/install-vscode-insiders.sh"
-
-    if [ -x "$INSTALLER" ]; then
-        "$INSTALLER"
-    else
-        echo "ERROR: $INSTALLER not found"
-        exit 1
-    fi
+    echo "Installing VS Code Insiders from Homebrew..."
+    brew install --cask joshyorko/tools/vscode-insiders-linux
+    echo "✓ VS Code Insiders installation complete"
 
 [group('Dudley')]
 dudley-vscode-extensions:
