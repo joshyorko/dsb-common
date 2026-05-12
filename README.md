@@ -27,12 +27,14 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 
 - `usr/bin/dudley-random-wallpaper`
 - `etc/xdg/autostart/dudley-random-wallpaper.desktop`
+- `etc/dconf/db/distro.d/99-dudley-terminal-keybindings`
 - `etc/flatpak/preinstall.d/dudley-*.preinstall`
 - `usr/share/backgrounds/dudley/*`
 - `usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override`
 - `usr/bin/dudley-build-info`
 - `usr/share/ublue-os/homebrew/dudley-*.Brewfile`
 - `usr/share/ublue-os/just/60-dudley.just`
+- `usr/share/ublue-os/just/update.just`
 - `usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh`
 - `usr/share/ublue-os/vscode-extensions.list`
 

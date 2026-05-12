@@ -1,4 +1,5 @@
 # CLI Tools and Utilities for Dudley's Second Bedroom
+tap "buildpacks/tap"
 tap "valkyrie00/bbrew"
 
 # Terminal enhancements
@@ -32,7 +33,7 @@ brew "glab"
 
 # File processing and utilities
 brew "figlet"
-brew "pack"
+brew "buildpacks/tap/pack"
 brew "pigz"
 brew "yq"
 brew "zopfli"

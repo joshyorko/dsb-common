@@ -3,11 +3,15 @@
 # Custom taps
 tap "joshyorko/tools"
 
+# VS Code Insiders packaged for Linux Homebrew
+cask "joshyorko/tools/vscode-insiders-linux"
+
 # RCC - Robocorp Control Center CLI for RPA automation
 cask "joshyorko/tools/rcc"
 
-# VS Code Insiders
-cask "joshyorko/tools/vscode-insiders-linux"
+# Action Server - Sema4.ai action runtime for HTTP/MCP actions
+cask "joshyorko/tools/action-server"
+
 
 # Configuration management
 brew "ansible"

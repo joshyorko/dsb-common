@@ -1,157 +1,239 @@
-# vim: set ft=make :
-########################
-### Dudley's Brew Installation Commands
-########################
-## Dudley-opinionated just recipes for installing packages from Brewfiles.
-## These are placed in system_files/dudley and apply only to Dudley-flavoured images.
+# Dudley runtime commands
+#
+# One entrypoint for Homebrew bundles and VS Code extensions.
+#
+# Examples:
+#   ujust dudley
+#   ujust dudley brew dev
+#   ujust dudley extensions
+#   ujust dudley extensions force
 
-# Install CLI tools and utilities
+# ujust dudley list
+dudley action="setup" target="all" mode="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    ACTION="{{ action }}"
+    TARGET="{{ target }}"
+    MODE="{{ mode }}"
+    BREW_DIR="/usr/share/ublue-os/homebrew"
+    EXTENSIONS_HOOK="/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh"
+
+    ensure_brew() {
+        if ! command -v brew >/dev/null 2>&1; then
+            echo "ERROR: Homebrew is not available on PATH"
+            exit 1
+        fi
+    }
+
+    run_bundle() {
+        local bundle="$1"
+        local brewfile="$BREW_DIR/$bundle"
+
+        ensure_brew
+        if [[ ! -f "$brewfile" ]]; then
+            echo "ERROR: $brewfile not found"
+            exit 1
+        fi
+
+        echo "Installing $(basename "$bundle" .Brewfile) ..."
+        brew bundle --file="$brewfile"
+        install_linux_casks "$brewfile"
+        echo "OK: $(basename "$bundle" .Brewfile) complete"
+    }
+
+    install_linux_casks() {
+        local brewfile="$1"
+        local cask
+
+        if [[ "$(uname -s)" != "Linux" ]]; then
+            return 0
+        fi
+
+        while IFS= read -r cask; do
+            [[ -n "$cask" ]] || continue
+
+            if brew list --cask "$cask" >/dev/null 2>&1; then
+                echo "OK: $cask already installed"
+                continue
+            fi
+
+            echo "Installing Linux cask $cask ..."
+            brew install --cask "$cask"
+        done < <(sed -nE 's/^[[:space:]]*cask[[:space:]]+"([^"]+)".*/\1/p' "$brewfile")
+    }
+
+    run_extensions() {
+        if [[ ! -x "$EXTENSIONS_HOOK" ]]; then
+            echo "ERROR: $EXTENSIONS_HOOK not found"
+            exit 1
+        fi
+
+        if [[ "$MODE" == "force" ]]; then
+            echo "Forcing VS Code extension reinstall..."
+            VSCODE_EXTENSIONS_FORCE=1 bash "$EXTENSIONS_HOOK"
+        else
+            bash "$EXTENSIONS_HOOK"
+        fi
+    }
+
+    show_list() {
+        echo "Available Dudley Brewfiles:"
+        if [[ -d "$BREW_DIR" ]]; then
+            ls -1 "$BREW_DIR"/dudley-*.Brewfile 2>/dev/null || echo "No Brewfiles found"
+        else
+            echo "Homebrew directory not found"
+        fi
+
+        echo ""
+        echo "Examples:"
+        echo "  ujust dudley                 # install all Brewfiles, then VS Code extensions"
+        echo "  ujust dudley brew dev        # install dev Brewfile only"
+        echo "  ujust dudley extensions      # install/update VS Code extensions"
+        echo "  ujust dudley extensions force"
+    }
+
+    case "$ACTION" in
+        setup)
+            case "$TARGET" in
+                all)
+                    run_bundle "dudley-cli.Brewfile"
+                    run_bundle "dudley-dev.Brewfile"
+                    run_bundle "dudley-fonts.Brewfile"
+                    run_bundle "dudley-k8s.Brewfile"
+                    run_extensions
+                    ;;
+                cli)
+                    run_bundle "dudley-cli.Brewfile"
+                    ;;
+                dev)
+                    run_bundle "dudley-dev.Brewfile"
+                    run_extensions
+                    ;;
+                fonts)
+                    run_bundle "dudley-fonts.Brewfile"
+                    ;;
+                k8s)
+                    run_bundle "dudley-k8s.Brewfile"
+                    ;;
+                *)
+                    echo "ERROR: Unknown setup target '$TARGET'"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        brew)
+            case "$TARGET" in
+                all)
+                    run_bundle "dudley-cli.Brewfile"
+                    run_bundle "dudley-dev.Brewfile"
+                    run_bundle "dudley-fonts.Brewfile"
+                    run_bundle "dudley-k8s.Brewfile"
+                    ;;
+                cli)
+                    run_bundle "dudley-cli.Brewfile"
+                    ;;
+                dev)
+                    run_bundle "dudley-dev.Brewfile"
+                    ;;
+                fonts)
+                    run_bundle "dudley-fonts.Brewfile"
+                    ;;
+                k8s)
+                    run_bundle "dudley-k8s.Brewfile"
+                    ;;
+                *)
+                    echo "ERROR: Unknown brew target '$TARGET'"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        extensions)
+            run_extensions
+            ;;
+        list|help|--help|-h)
+            show_list
+            ;;
+        *)
+            echo "ERROR: Unknown Dudley action '$ACTION'"
+            show_list
+            exit 1
+            ;;
+    esac
+
+# Backward-compatible wrappers for the older split Dudley recipes.
 [group('Dudley')]
 dudley-brews-cli:
-    #!/usr/bin/bash
-    set -euo pipefail
-    BREWFILE="/usr/share/ublue-os/homebrew/dudley-cli.Brewfile"
-    if [ -f "$BREWFILE" ]; then
-        echo "Installing CLI tools from dudley-cli.Brewfile..."
-        brew bundle --file="$BREWFILE"
-        echo "✓ CLI tools installation complete"
-    else
-        echo "ERROR: $BREWFILE not found"
-        exit 1
-    fi
+    @ujust dudley brew cli
 
-# Install development tools
 [group('Dudley')]
 dudley-brews-dev:
-    #!/usr/bin/bash
-    set -euo pipefail
-    BREWFILE="/usr/share/ublue-os/homebrew/dudley-dev.Brewfile"
-    if [ -f "$BREWFILE" ]; then
-        echo "Installing development tools from dudley-dev.Brewfile..."
-        brew bundle --file="$BREWFILE"
-        echo "✓ Development tools installation complete"
-    else
-        echo "ERROR: $BREWFILE not found"
-        exit 1
-    fi
+    @ujust dudley brew dev
 
-# Install fonts
 [group('Dudley')]
 dudley-brews-fonts:
-    #!/usr/bin/bash
-    set -euo pipefail
-    BREWFILE="/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile"
-    if [ -f "$BREWFILE" ]; then
-        echo "Installing fonts from dudley-fonts.Brewfile..."
-        brew bundle --file="$BREWFILE"
-        echo "✓ Fonts installation complete"
-    else
-        echo "ERROR: $BREWFILE not found"
-        exit 1
-    fi
+    @ujust dudley brew fonts
 
-# Install Kubernetes and cloud-native tools
 [group('Dudley')]
 dudley-brews-k8s:
-    #!/usr/bin/bash
-    set -euo pipefail
-    BREWFILE="/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile"
-    if [ -f "$BREWFILE" ]; then
-        echo "Installing Kubernetes tools from dudley-k8s.Brewfile..."
-        brew bundle --file="$BREWFILE"
-        echo "✓ Kubernetes tools installation complete"
-    else
-        echo "ERROR: $BREWFILE not found"
-        exit 1
-    fi
+    @ujust dudley brew k8s
 
-# Install all Dudley brew packages
 [group('Dudley')]
 dudley-brews-all:
-    #!/usr/bin/bash
-    set -euo pipefail
-    echo "Installing all Dudley brew packages..."
-    echo ""
-    echo "=== Installing CLI tools ==="
-    ujust dudley-brews-cli
-    echo ""
-    echo "=== Installing development tools ==="
-    ujust dudley-brews-dev
-    echo ""
-    echo "=== Installing fonts ==="
-    ujust dudley-brews-fonts
-    echo ""
-    echo "=== Installing Kubernetes tools ==="
-    ujust dudley-brews-k8s
-    echo ""
-    echo "✓ All Dudley brew packages installed!"
+    @ujust dudley brew all
 
-# List available Dudley Brewfiles
 [group('Dudley')]
 dudley-brews-list:
-    #!/usr/bin/bash
-    set -euo pipefail
-    echo "Available Brewfiles in /usr/share/ublue-os/homebrew/:"
-    if [ -d "/usr/share/ublue-os/homebrew" ]; then
-        ls -1 /usr/share/ublue-os/homebrew/dudley-*.Brewfile 2>/dev/null || echo "No Dudley Brewfiles found"
-    else
-        echo "Homebrew directory not found"
-    fi
+    @ujust dudley list
 
-# Install VS Code Insiders extensions from list
 [group('Dudley')]
 dudley-vscode-insiders:
-    #!/usr/bin/bash
-    set -euo pipefail
-    echo "Installing VS Code Insiders from Homebrew..."
-    brew install --cask joshyorko/tools/vscode-insiders-linux
-    echo "✓ VS Code Insiders installation complete"
+    @ujust dudley brew dev
 
 [group('Dudley')]
 dudley-vscode-extensions:
-    #!/usr/bin/bash
-    set -euo pipefail
-    EXTENSIONS_FILE="/usr/share/ublue-os/vscode-extensions.list"
-
-    if ! command -v code-insiders &>/dev/null; then
-        echo "ERROR: VS Code Insiders not found. It should be pre-installed in the image."
-        exit 1
-    fi
-
-    if [ ! -f "$EXTENSIONS_FILE" ]; then
-        echo "ERROR: Extensions list not found at $EXTENSIONS_FILE"
-        exit 1
-    fi
-
-    echo "Installing VS Code Insiders extensions..."
-    declare -i installed=0
-    declare -i failed=0
-    while IFS= read -r ext || [ -n "$ext" ]; do
-        [[ -z "$ext" || "$ext" =~ ^[[:space:]]*# ]] && continue
-        ext=$(echo "$ext" | xargs)
-        echo "  Installing: $ext"
-        if code-insiders --install-extension "$ext" --force &>/dev/null; then
-            ((installed++))
-        else
-            echo "    ⚠ Failed to install $ext"
-            ((failed++))
-        fi
-    done < "$EXTENSIONS_FILE"
-
-    echo ""
-    echo "✓ Extensions installed: $installed"
-    [ "$failed" -gt 0 ] && echo "⚠ Extensions failed: $failed"
-    echo "Done!"
+    @ujust dudley extensions
 
 [group('Dudley')]
 dudley-vscode-all:
-    #!/usr/bin/bash
-    set -euo pipefail
-    ujust dudley-vscode-insiders
-    ujust dudley-vscode-extensions
+    @ujust dudley setup dev
 
 [group('Dudley')]
 dudley-build-info:
     #!/usr/bin/bash
     set -euo pipefail
     /usr/bin/dudley-build-info
+
+# Dudley already inherits from a DX base image, so Bluefin's generic devmode
+# rebase recipe should not synthesize a sibling image name for this repo.
+devmode:
+    @ujust toggle-devmode
+
+toggle-devmode:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    IMAGE_INFO_FILE="${IMAGE_INFO_FILE:-/usr/share/ublue-os/image-info.json}"
+    if [[ ! -f "$IMAGE_INFO_FILE" ]]; then
+        echo "ERROR: $IMAGE_INFO_FILE not found"
+        exit 1
+    fi
+
+    image_flavor="$(jq -r '."image-flavor" // ""' "$IMAGE_INFO_FILE")"
+    base_image_name="$(jq -r '."base-image-name" // ""' "$IMAGE_INFO_FILE")"
+
+    if [[ "$image_flavor" =~ dx || "$base_image_name" =~ dx ]]; then
+        echo "Dudley is already built from a developer image."
+        if gum confirm "Install the default development Flatpaks?"; then
+            ADD_DEVMODE=1 ujust install-system-flatpaks 0 1
+        fi
+        if gum confirm "Install extra monospace fonts?"; then
+            brew bundle install --file=/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile
+        fi
+        echo "Use ujust dx-group to add your user to the correct groups and complete the installation after rebooting into the development image"
+        exit 0
+    fi
+
+    echo "Dudley is not built from a DX base image."
+    echo "Rebuild with BASE_IMAGE=ghcr.io/ublue-os/bluefin-dx:stable instead of using Bluefin's generic devmode rebase."
+    exit 1

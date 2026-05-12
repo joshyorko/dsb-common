@@ -22,4 +22,4 @@ brew "hadolint"
 # Security scanning
 brew "grype"
 brew "syft"
-brew "trivy"
+brew "trivy"  # SBOM generation and vulnerability scanning (used in CI)

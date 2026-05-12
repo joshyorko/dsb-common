@@ -1,0 +1,5 @@
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
+command='/usr/bin/ptyxis --new-window'
+
+[org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1]
+command='/usr/bin/ptyxis --new-window'
