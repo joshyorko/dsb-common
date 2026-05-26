@@ -26,6 +26,7 @@ Cross-image reusable content that is not Dudley-branded. Current examples:
 Dudley-opinionated content that should follow the Dudley flavor across consuming images. Current examples:
 
 - `usr/bin/dudley-random-wallpaper`
+- `etc/yum.repos.d/google-chrome.repo`
 - `etc/xdg/autostart/dudley-random-wallpaper.desktop`
 - `etc/dconf/db/distro.d/99-dudley-terminal-keybindings`
 - `etc/flatpak/preinstall.d/dudley-*.preinstall`
@@ -40,7 +41,7 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 
 The Dudley wallpaper photos from `joshyorko/dudleys-second-bedroom/custom_wallpapers` are bundled here so the wallpaper switcher works without consumer repos carrying duplicate image assets.
 
-When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, wallpapers, Brewfiles, Flatpak manifests, VS Code Insiders Homebrew opinion, VS Code extension opinion, and setup assets in `dudley/`.
+When migrating content from `dudleys-second-bedroom`, place reusable non-branded content in `shared/` and keep Dudley-specific defaults, branding, wallpaper behavior, wallpapers, Brewfiles, Flatpak manifests, RPM repository definitions such as Google Chrome, VS Code Insiders Homebrew opinion, VS Code extension opinion, and setup assets in `dudley/`.
 
 `dudley-build-info` is shipped from this repo as a Dudley-facing diagnostic command. Consuming repos are responsible for generating `/etc/dudley/build-manifest.json` during final assembly so the command has image metadata to display.
 
@@ -51,23 +52,21 @@ When migrating content from `dudleys-second-bedroom`, place reusable non-branded
 ```dockerfile
 FROM scratch AS ctx
 
-COPY --from=ghcr.io/joshyorko/dsb-common:latest /system_files /ctx/oci/dsb-common/system_files
-COPY --from=ghcr.io/projectbluefin/common:latest / /ctx/oci/bluefin-common
+COPY --from=ghcr.io/joshyorko/dsb-common:latest /system_files/shared /ctx/oci/dsb-common/shared
+COPY --from=ghcr.io/joshyorko/dsb-common:latest /system_files/dudley /ctx/oci/dsb-common/dudley
 
-FROM ghcr.io/ublue-os/silverblue-main:latest
+FROM ghcr.io/ublue-os/bluefin-dx:latest
 
-RUN cp -r /ctx/oci/dsb-common/system_files/shared/. / && \
-    cp -r /ctx/oci/bluefin-common/. / && \
-    cp -r /ctx/oci/dsb-common/system_files/dudley/. / && \
+RUN cp -r /ctx/oci/dsb-common/shared/. / && \
+    cp -r /ctx/oci/dsb-common/dudley/. / && \
     cp -r /ctx/local-product-files/. /
 ```
 
 Intended copy precedence:
 
 1. `dsb-common/shared`
-2. `projectbluefin/common`
-3. `dsb-common/dudley`
-4. local product files from the consumer repo
+2. `dsb-common/dudley`
+3. local product files from the consumer repo
 
 ## Build and Publish
 
