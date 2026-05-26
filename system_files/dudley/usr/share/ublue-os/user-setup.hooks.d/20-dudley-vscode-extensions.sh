@@ -2,7 +2,7 @@
 # VS Code extensions user hook
 set -euo pipefail
 
-hook_version="2026-05-12"
+hook_version="2026-05-26"
 
 resolve_vscode_cli() {
     local brew_prefix=""
@@ -49,12 +49,16 @@ fi
 
 echo "Dudley Hook: vscode-extensions starting (version ${hook_version})"
 
-mkdir -p "$HOME/.config" || true
 USER_DATA_DIR="$HOME/.config/Code - Insiders"
+SKEL_SETTINGS="/etc/skel/.config/Code - Insiders/User/settings.json"
 if [[ "$(basename "$VSCODE_CMD")" == "code" ]]; then
     USER_DATA_DIR="$HOME/.config/Code"
+    SKEL_SETTINGS="/etc/skel/.config/Code/User/settings.json"
 fi
-mkdir -p "$USER_DATA_DIR" || true
+mkdir -p "$USER_DATA_DIR/User"
+if [[ ! -f "$USER_DATA_DIR/User/settings.json" && -f "$SKEL_SETTINGS" ]]; then
+    cp -f "$SKEL_SETTINGS" "$USER_DATA_DIR/User/settings.json"
+fi
 
 MARKER="$USER_DATA_DIR/.extensions-installed"
 if [[ "${VSCODE_EXTENSIONS_FORCE:-0}" == "1" ]]; then

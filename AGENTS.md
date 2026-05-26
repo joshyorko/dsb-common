@@ -39,6 +39,8 @@ git diff --check
 shellcheck -x system_files/dudley/usr/bin/dudley-random-wallpaper system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh
 HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --file=system_files/dudley/usr/share/ublue-os/homebrew/dudley-cli.Brewfile
 HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --file=system_files/dudley/usr/share/ublue-os/homebrew/dudley-dev.Brewfile
+HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --file=system_files/dudley/usr/share/ublue-os/homebrew/dudley-ide.Brewfile
+HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --file=system_files/dudley/usr/share/ublue-os/homebrew/dudley-ai.Brewfile
 HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --file=system_files/dudley/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile
 HOMEBREW_NO_AUTO_UPDATE=1 brew bundle list --file=system_files/dudley/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile
 just --unstable --fmt --check -f system_files/shared/usr/share/ublue-os/just/60-custom.just

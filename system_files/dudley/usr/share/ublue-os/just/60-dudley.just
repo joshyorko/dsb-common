@@ -4,7 +4,10 @@
 #
 # Examples:
 #   ujust dudley
+#   ujust dudley dx
+#   ujust dudley agents
 #   ujust dudley brew dev
+#   ujust dudley brew ide
 #   ujust dudley extensions
 #   ujust dudley extensions force
 
@@ -77,6 +80,14 @@ dudley action="setup" target="all" mode="":
         fi
     }
 
+    run_default_bundles() {
+        run_bundle "dudley-cli.Brewfile"
+        run_bundle "dudley-dev.Brewfile"
+        run_bundle "dudley-ide.Brewfile"
+        run_bundle "dudley-fonts.Brewfile"
+        run_bundle "dudley-k8s.Brewfile"
+    }
+
     show_list() {
         echo "Available Dudley Brewfiles:"
         if [[ -d "$BREW_DIR" ]]; then
@@ -88,7 +99,10 @@ dudley action="setup" target="all" mode="":
         echo ""
         echo "Examples:"
         echo "  ujust dudley                 # install all Brewfiles, then VS Code extensions"
+        echo "  ujust dudley dx              # install Dudley portable DX payload"
+        echo "  ujust dudley agents          # install opt-in AI and agent tools"
         echo "  ujust dudley brew dev        # install dev Brewfile only"
+        echo "  ujust dudley brew ide        # install IDE/editor Brewfile only"
         echo "  ujust dudley extensions      # install/update VS Code extensions"
         echo "  ujust dudley extensions force"
     }
@@ -96,18 +110,22 @@ dudley action="setup" target="all" mode="":
     case "$ACTION" in
         setup)
             case "$TARGET" in
-                all)
-                    run_bundle "dudley-cli.Brewfile"
-                    run_bundle "dudley-dev.Brewfile"
-                    run_bundle "dudley-fonts.Brewfile"
-                    run_bundle "dudley-k8s.Brewfile"
+                all|dx)
+                    run_default_bundles
                     run_extensions
+                    ;;
+                ai|agents)
+                    run_bundle "dudley-ai.Brewfile"
                     ;;
                 cli)
                     run_bundle "dudley-cli.Brewfile"
                     ;;
                 dev)
                     run_bundle "dudley-dev.Brewfile"
+                    run_extensions
+                    ;;
+                ide)
+                    run_bundle "dudley-ide.Brewfile"
                     run_extensions
                     ;;
                 fonts)
@@ -124,17 +142,20 @@ dudley action="setup" target="all" mode="":
             ;;
         brew)
             case "$TARGET" in
-                all)
-                    run_bundle "dudley-cli.Brewfile"
-                    run_bundle "dudley-dev.Brewfile"
-                    run_bundle "dudley-fonts.Brewfile"
-                    run_bundle "dudley-k8s.Brewfile"
+                all|dx)
+                    run_default_bundles
+                    ;;
+                ai|agents)
+                    run_bundle "dudley-ai.Brewfile"
                     ;;
                 cli)
                     run_bundle "dudley-cli.Brewfile"
                     ;;
                 dev)
                     run_bundle "dudley-dev.Brewfile"
+                    ;;
+                ide)
+                    run_bundle "dudley-ide.Brewfile"
                     ;;
                 fonts)
                     run_bundle "dudley-fonts.Brewfile"
@@ -151,6 +172,13 @@ dudley action="setup" target="all" mode="":
         extensions)
             run_extensions
             ;;
+        dx)
+            run_default_bundles
+            run_extensions
+            ;;
+        ai|agents)
+            run_bundle "dudley-ai.Brewfile"
+            ;;
         list|help|--help|-h)
             show_list
             ;;
@@ -163,12 +191,20 @@ dudley action="setup" target="all" mode="":
 
 # Backward-compatible wrappers for the older split Dudley recipes.
 [group('Dudley')]
+dudley-brews-ai:
+    @ujust dudley brew ai
+
+[group('Dudley')]
 dudley-brews-cli:
     @ujust dudley brew cli
 
 [group('Dudley')]
 dudley-brews-dev:
     @ujust dudley brew dev
+
+[group('Dudley')]
+dudley-brews-ide:
+    @ujust dudley brew ide
 
 [group('Dudley')]
 dudley-brews-fonts:
@@ -199,6 +235,18 @@ dudley-vscode-all:
     @ujust dudley setup dev
 
 [group('Dudley')]
+dudley-dx:
+    @ujust dudley setup dx
+
+[group('Dudley')]
+dudley-ai:
+    @ujust dudley ai
+
+[group('Dudley')]
+dudley-agents:
+    @ujust dudley agents
+
+[group('Dudley')]
 dudley-build-info:
     #!/usr/bin/bash
     set -euo pipefail
@@ -224,16 +272,16 @@ toggle-devmode:
 
     if [[ "$image_flavor" =~ dx || "$base_image_name" =~ dx ]]; then
         echo "Dudley is already built from a developer image."
+        echo "Installing Dudley's portable DX payload from dsb-common."
+        ujust dudley setup dx
         if gum confirm "Install the default development Flatpaks?"; then
             ADD_DEVMODE=1 ujust install-system-flatpaks 0 1
         fi
-        if gum confirm "Install extra monospace fonts?"; then
-            brew bundle install --file=/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile
-        fi
-        echo "Use ujust dx-group to add your user to the correct groups and complete the installation after rebooting into the development image"
+        echo "Use ujust dx-group to add your user to docker, incus-admin, libvirt, and dialout if those groups are present on the image."
         exit 0
     fi
 
     echo "Dudley is not built from a DX base image."
-    echo "Rebuild with BASE_IMAGE=ghcr.io/ublue-os/bluefin-dx:stable instead of using Bluefin's generic devmode rebase."
+    echo "Install the portable user-space DX payload with: ujust dudley dx"
+    echo "Host-level DX packages still belong in the final product image, Dakota BuildStream graph, or sysexts."
     exit 1

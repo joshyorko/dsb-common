@@ -1,5 +1,14 @@
+[Flatpak Preinstall de.leopoldluley.Clapgrep]
+Branch=stable
+
+[Flatpak Preinstall io.github.getnf.embellish]
+Branch=stable
+
 [Flatpak Preinstall io.podman_desktop.PodmanDesktop]
 Branch=stable
 
 [Flatpak Preinstall me.iepure.devtoolbox]
+Branch=stable
+
+[Flatpak Preinstall org.gnome.Builder]
 Branch=stable
