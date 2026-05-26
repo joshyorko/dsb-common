@@ -6,6 +6,7 @@
 *.qcow2
 *.raw
 cosign.key
+.dagger/internal/
 
 # Editor and IDE files
 .idea/

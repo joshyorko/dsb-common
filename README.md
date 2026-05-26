@@ -91,6 +91,46 @@ The repository ships only the minimal workflow needed to build and publish the O
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
 - If `SIGNING_SECRET` is configured, published images are also signed with cosign.
 
+### Portable Dagger Release Pipeline
+
+GitHub Actions is now only the hosted runner. The release behavior lives in the
+repo-local Dagger module, so the same pipeline can run locally, in GitHub
+Actions, GitLab CI, or against another OCI registry:
+
+```bash
+dagger functions
+dagger call metadata
+dagger call release --publish=false
+```
+
+Release to GHCR after authenticating with a token:
+
+```bash
+dagger call release \
+  --registry ghcr.io/joshyorko \
+  --registry-username "$GITHUB_ACTOR" \
+  --registry-password env:GITHUB_TOKEN \
+  --signing-key env:SIGNING_SECRET \
+  --signing-password env:SIGNING_PASSWORD \
+  --source-uri https://github.com/joshyorko/dsb-common
+```
+
+Release to another registry without code changes:
+
+```bash
+dagger call release --registry registry.gitlab.com/group --publish=false
+dagger call release --registry localhost:5000 --sign=false --attest=false
+```
+
+The Dagger module exposes `metadata`, `build`, `publish`, `sbom`,
+`attest-sbom`, `attest-provenance`, `sign`, and `release`. The release path
+uses Buildah from `quay.io/buildah/stable:v1.41`, builds this repo's scratch
+`Containerfile` with OCI format, publishes `latest`, `YYYYMMDD`, and the short
+commit SHA, generates a Trivy SPDX JSON SBOM, and uses cosign for key-based
+signing and SBOM/SLSA provenance attestations when `--signing-key` is provided.
+Loopback registries (`localhost`, `127.0.0.1`, and `[::1]`) publish with
+`--tls-verify=false`; all other registries use TLS verification.
+
 ## Dudley Bot Renovate
 
 Dependency updates are handled by the self-hosted GitHub Actions workflow in `.github/workflows/renovate.yml`. Set the repository secret `RENOVATE_TOKEN` to a Dudley-owned bot account or GitHub App installation token when you want Renovate pull requests to come from that identity. Without the secret, the workflow can fall back to `github.token` for repository-local runs. Bot tokens must be able to read Dependabot/vulnerability alerts so Renovate can process vulnerability fixes without warning.
@@ -107,7 +147,8 @@ For forks:
 
 1. Run `cosign generate-key-pair`.
 2. Add `cosign.key` as the `SIGNING_SECRET` repository secret.
-3. Replace `cosign.pub` with the matching public key.
+3. Add the cosign key password as `SIGNING_PASSWORD` only when the key is encrypted; leave it unset for an unencrypted key.
+4. Replace `cosign.pub` with the matching public key.
 
 If you have not configured signing yet, the publish workflow still builds and publishes the layer and skips the signing step.
 
