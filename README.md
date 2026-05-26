@@ -45,6 +45,20 @@ When migrating content from `dudleys-second-bedroom`, place reusable non-branded
 
 `dudley-build-info` is shipped from this repo as a Dudley-facing diagnostic command. Consuming repos are responsible for generating `/etc/dudley/build-manifest.json` during final assembly so the command has image metadata to display.
 
+## Portable DX Payload
+
+Dudley's portable developer experience lives here instead of in a final product image. It tracks the user-space parts of Bluefin DX and Project Bluefin common that can travel cleanly across current Bluefin-based images and future Dakota-style assembly:
+
+- extra CLI/session tools such as `atuin`, `mise`, and `podman-tui`
+- IDE/editor tooling in `dudley-ide.Brewfile`
+- extra Nerd Fonts from Bluefin common
+- DX Flatpaks in `dudley-dx.preinstall`
+- VS Code default settings and extension setup
+- `ujust dudley dx` as the user-space setup entrypoint
+- opt-in AI and agent tooling through `dudley-ai.Brewfile`, `ujust dudley ai`, and `ujust dudley agents`
+
+Fedora/DNF packages, systemd service enablement, Docker/libvirt/incus group creation, BuildStream elements, bootc metadata, and baked browser/package installs remain final-image concerns. Put those in `dudley-os`, Dakota/BuildStream product targets, or sysexts rather than this shared payload layer.
+
 ## Consumer Pattern
 
 `dudley-os` is the product repo and should consume this layer by copying the namespaced directories in order.
