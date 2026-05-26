@@ -48,6 +48,12 @@ just --unstable --fmt --check -f system_files/dudley/usr/share/ublue-os/just/upd
 
 If a tool is unavailable locally, note that in your handoff and rely on the GitHub workflow to cover it.
 
+## Dudley Bot Renovate
+
+This repo runs self-hosted Renovate from `.github/workflows/renovate.yml`.
+
+Use the repository secret `RENOVATE_TOKEN` for a Dudley-owned bot account or GitHub App installation. If the secret is absent, the workflow falls back to `github.token`, which is useful for smoke tests but will not make pull requests appear as a Dudley-branded bot.
+
 ## Merge Order
 
 Changes here must publish before `dudley-os` can consume them from `ghcr.io/joshyorko/dsb-common:latest`.
