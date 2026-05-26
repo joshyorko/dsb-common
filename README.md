@@ -91,11 +91,11 @@ The repository ships only the minimal workflow needed to build and publish the O
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
 - If `SIGNING_SECRET` is configured, published images are also signed with cosign.
 
-### Portable Dagger Release Pipeline
+### Local Dagger Helpers
 
-GitHub Actions is now only the hosted runner. The release behavior lives in the
-repo-local Dagger module, so the same pipeline can run locally, in GitHub
-Actions, GitLab CI, or against another OCI registry:
+The repo-local Dagger module is for local and ad hoc portable runs. GitHub
+Actions keeps its separate workflow in `.github/workflows/build.yml`; CI does
+not call Dagger.
 
 ```bash
 dagger functions
@@ -103,7 +103,7 @@ dagger call metadata
 dagger call release --publish=false
 ```
 
-Release to GHCR after authenticating with a token:
+Run the local release path against GHCR after authenticating with a token:
 
 ```bash
 dagger call release \
@@ -115,7 +115,7 @@ dagger call release \
   --source-uri https://github.com/joshyorko/dsb-common
 ```
 
-Release to another registry without code changes:
+Try another registry without code changes:
 
 ```bash
 dagger call release --registry registry.gitlab.com/group --publish=false
@@ -123,13 +123,13 @@ dagger call release --registry localhost:5000 --sign=false --attest=false
 ```
 
 The Dagger module exposes `metadata`, `build`, `publish`, `sbom`,
-`attest-sbom`, `attest-provenance`, `sign`, and `release`. The release path
-uses Buildah from `quay.io/buildah/stable:v1.41`, builds this repo's scratch
-`Containerfile` with OCI format, publishes `latest`, `YYYYMMDD`, and the short
-commit SHA, generates a Trivy SPDX JSON SBOM, and uses cosign for key-based
-signing and SBOM/SLSA provenance attestations when `--signing-key` is provided.
-Loopback registries (`localhost`, `127.0.0.1`, and `[::1]`) publish with
-`--tls-verify=false`; all other registries use TLS verification.
+`attest-sbom`, `attest-provenance`, `sign`, and `release`. It uses Buildah
+from `quay.io/buildah/stable:v1.41`, builds this repo's scratch `Containerfile`
+with OCI format, plans `latest`, `YYYYMMDD`, and short-SHA tags, generates a
+Trivy SPDX JSON SBOM, and can use cosign for key-based signing and SBOM/SLSA
+provenance attestations when `--signing-key` is provided. Loopback registries
+(`localhost`, `127.0.0.1`, and `[::1]`) publish with `--tls-verify=false`; all
+other registries use TLS verification.
 
 ## Dudley Bot Renovate
 
