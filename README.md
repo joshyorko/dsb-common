@@ -72,6 +72,7 @@ Intended copy precedence:
 
 The repository ships only the minimal workflow needed to build and publish the OCI layer.
 
+- Pull requests validate shell payloads, Brewfile syntax, Flatpak preinstall files, just recipes, and the Chrome repo contract.
 - Pull requests to `main` build the image for validation.
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
 - If `SIGNING_SECRET` is configured, published images are also signed with cosign.
