@@ -77,6 +77,10 @@ The repository ships only the minimal workflow needed to build and publish the O
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
 - If `SIGNING_SECRET` is configured, published images are also signed with cosign.
 
+## Dudley Bot Renovate
+
+Dependency updates are handled by the self-hosted GitHub Actions workflow in `.github/workflows/renovate.yml`. Set the repository secret `RENOVATE_TOKEN` to a Dudley-owned bot account or GitHub App installation token when you want Renovate pull requests to come from that identity. Without the secret, the workflow can fall back to `github.token` for repository-local runs.
+
 The public verification key is stored in `cosign.pub`.
 
 ```bash
