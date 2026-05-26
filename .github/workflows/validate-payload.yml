@@ -1,0 +1,117 @@
+name: Validate Payload
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "system_files/**"
+      - "AGENTS.md"
+      - ".github/workflows/validate-payload.yml"
+  merge_group:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install just
+        uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # v2
+
+      - name: Install validators
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck ruby
+
+      - name: Validate shell payload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          find system_files -type f -print0 | \
+            while IFS= read -r -d '' file; do
+              if head -n 1 "$file" | grep -Eq '^#!.*(ba)?sh'; then
+                echo "::group::shellcheck $file"
+                shellcheck -x "$file"
+                echo "::endgroup::"
+              fi
+            done
+
+      - name: Validate Brewfiles
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          find system_files -type f -name '*.Brewfile' -print0 | \
+            while IFS= read -r -d '' brewfile; do
+              echo "::group::ruby -c $brewfile"
+              ruby -c "$brewfile"
+              echo "::endgroup::"
+            done
+
+      - name: Validate Flatpak preinstall files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from configparser import ConfigParser
+          from pathlib import Path
+          import re
+          import sys
+
+          files = sorted(Path("system_files").glob("**/etc/flatpak/preinstall.d/*.preinstall"))
+          errors = []
+          app_id = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*(?:\.[A-Za-z0-9_][A-Za-z0-9_.-]*)+$")
+
+          for path in files:
+              parser = ConfigParser()
+              parser.optionxform = str
+              parser.read(path)
+              if not parser.sections():
+                  errors.append(f"{path}: no Flatpak Preinstall sections")
+                  continue
+              for section in parser.sections():
+                  prefix = "Flatpak Preinstall "
+                  if not section.startswith(prefix):
+                      errors.append(f"{path}: unexpected section [{section}]")
+                      continue
+                  app = section[len(prefix):].strip()
+                  if not app_id.match(app):
+                      errors.append(f"{path}: invalid Flatpak app id {app!r}")
+                  if not parser.get(section, "Branch", fallback="").strip():
+                      errors.append(f"{path}: [{section}] missing Branch")
+
+          if errors:
+              print("\n".join(errors), file=sys.stderr)
+              sys.exit(1)
+          PY
+
+      - name: Validate just payload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          find system_files -type f -path '*/usr/share/ublue-os/just/*.just' -print0 | \
+            while IFS= read -r -d '' justfile; do
+              echo "::group::just --fmt --check $justfile"
+              just --unstable --fmt --check -f "$justfile"
+              echo "::endgroup::"
+            done
+
+      - name: Validate Chrome repo payload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          repo="system_files/dudley/etc/yum.repos.d/google-chrome.repo"
+          test -f "$repo"
+          grep -Fxq "[google-chrome]" "$repo"
+          grep -Fxq "enabled=1" "$repo"
