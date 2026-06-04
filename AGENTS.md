@@ -52,9 +52,9 @@ If a tool is unavailable locally, note that in your handoff and rely on the GitH
 
 ## Dudley Bot Renovate
 
-This repo runs self-hosted Renovate from `.github/workflows/renovate.yml`.
+This repo is managed by the central `joshyorko/renovate-config` runner. Keep repo-specific rules in `.github/renovate.json5`; do not add a repo-local Renovate workflow unless Josh explicitly asks for that runner model again.
 
-Use the repository secret `RENOVATE_TOKEN` for a Dudley-owned bot account or GitHub App installation. Do not fall back to `github.token`; it can leave Renovate branches without PR checks and cannot update workflow files. Bot tokens must be able to read Dependabot/vulnerability alerts and write workflow files, or Renovate will warn about vulnerability alerts and GitHub will reject updates under `.github/workflows/`.
+The central bot must be able to read Dependabot/vulnerability alerts and write workflow files, or Renovate will warn about vulnerability alerts and GitHub will reject updates under `.github/workflows/`.
 
 ## Merge Order
 

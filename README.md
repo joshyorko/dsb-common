@@ -89,7 +89,7 @@ The repository ships only the minimal workflow needed to build and publish the O
 - Pull requests validate shell payloads, Brewfile syntax, Flatpak preinstall files, just recipes, and the Chrome repo contract.
 - Pull requests to `main` build the image for validation.
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
-- If `SIGNING_SECRET` is configured, published images are also signed with cosign.
+- Published images are keylessly signed with cosign, get an attached SPDX SBOM, and publish GitHub provenance attestations.
 
 ### Local Dagger Helpers
 
@@ -143,24 +143,18 @@ other registries use TLS verification.
 
 ## Dudley Bot Renovate
 
-Dependency updates are handled by the self-hosted GitHub Actions workflow in `.github/workflows/renovate.yml`. Set the repository secret `RENOVATE_TOKEN` to a Dudley-owned bot account or GitHub App installation token when you want Renovate pull requests to come from that identity. Without the secret, the workflow can fall back to `github.token` for repository-local runs. Bot tokens must be able to read Dependabot/vulnerability alerts so Renovate can process vulnerability fixes without warning.
+Dependency updates are handled by the central `joshyorko/renovate-config` runner. Repo-specific matching and grouping lives in `.github/renovate.json5`; do not add a repo-local Renovate workflow unless the runner model changes again. The central bot token must be able to read Dependabot/vulnerability alerts and write workflow files so Renovate can update `.github/workflows/**`.
 
-The public verification key is stored in `cosign.pub`.
+Published CI images use keyless signing. Verify them with the GitHub Actions OIDC identity:
 
 ```bash
 cosign verify \
-  --key cosign.pub \
+  --certificate-identity-regexp "https://github.com/joshyorko/dsb-common/" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   ghcr.io/joshyorko/dsb-common:latest
 ```
 
-For forks:
-
-1. Run `cosign generate-key-pair`.
-2. Add `cosign.key` as the `SIGNING_SECRET` repository secret.
-3. Add the cosign key password as `SIGNING_PASSWORD` only when the key is encrypted; leave it unset for an unencrypted key.
-4. Replace `cosign.pub` with the matching public key.
-
-If you have not configured signing yet, the publish workflow still builds and publishes the layer and skips the signing step.
+The repo-local Dagger release path can still use key-based signing for ad hoc registries when `--signing-key` is provided.
 
 ## Scope Guardrails
 
