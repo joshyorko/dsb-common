@@ -1,0 +1,22 @@
+name: Cleanup Old Images
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+
+jobs:
+  delete-older-than-90:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete images older than 90 days
+        uses: projectbluefin/actions/bootc-build/ghcr-cleanup@v1
+        with:
+          packages: dsb-common
+          older-than: 90 days
+          keep-n-tagged: "7"
+          keep-n-untagged: "7"
+          github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -22,12 +22,11 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
   IMAGE_NAME: dsb-common
-  COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
 jobs:
   build_push:
     name: Build and push image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -37,19 +36,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
+      - name: Setup runner
+        uses: projectbluefin/actions/bootc-build/setup-runner@v1
+        with:
+          storage-backend: btrfs
+
+      - name: Preflight publish
+        id: preflight
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: projectbluefin/actions/bootc-build/preflight@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ${{ env.IMAGE_NAME }}
+
       - name: Generate tags
         id: generate-tags
         shell: bash
         run: |
-          echo "sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "sha_short=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
           alias_tags=()
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             alias_tags+=("pr-${{ github.event.number }}")
           else
-            echo "date=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+            echo "date=$(date +%Y%m%d)" >> "${GITHUB_OUTPUT}"
             alias_tags+=("latest")
           fi
-          echo "alias_tags=${alias_tags[*]}" >> $GITHUB_OUTPUT
+          echo "alias_tags=${alias_tags[*]}" >> "${GITHUB_OUTPUT}"
 
       - name: Build Image
         id: build_image
@@ -64,38 +76,24 @@ jobs:
             ${{ steps.generate-tags.outputs.sha_short }}
           oci: true
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        if: github.event_name != 'pull_request'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Push to GHCR
-        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2.8
         id: push
-        if: github.event_name != 'pull_request'
-        env:
-          REGISTRY_USER: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ github.token }}
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: projectbluefin/actions/bootc-build/push-image@v1
         with:
-          image: ${{ steps.build_image.outputs.image }}
+          image-name: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.build_image.outputs.tags }}
-          registry: ${{ env.IMAGE_REGISTRY }}
-          username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASSWORD }}
-          extra-args: |
-            --compression-format=zstd:chunked
+          default-tag: latest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-        if: github.event_name != 'pull_request' && env.COSIGN_PRIVATE_KEY != ''
-
-      - name: Sign container image
-        if: github.event_name != 'pull_request' && env.COSIGN_PRIVATE_KEY != ''
-        run: |
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}@${TAGS}
-        env:
-          TAGS: ${{ steps.push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
+      - name: Sign and publish provenance
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: projectbluefin/actions/bootc-build/sign-and-publish@v1
+        with:
+          image: ${{ steps.preflight.outputs.image-ref }}
+          digest: ${{ steps.push.outputs.digest }}
+          signing-mode: keyless
+          generate-sbom: "true"
+          push-attestation: "true"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ${{ env.IMAGE_NAME }}
