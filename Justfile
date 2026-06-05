@@ -1,4 +1,5 @@
 export image_name := env("IMAGE_NAME", "dsb-common")
+export default_tag := env("DEFAULT_TAG", "latest")
 export dagger_registry := env("DAGGER_REGISTRY", "ghcr.io/joshyorko")
 export dagger_local_registry := env("LOCAL_REGISTRY", "localhost:5000")
 export dagger_registry_username := env("REGISTRY_USERNAME", "")
@@ -6,10 +7,36 @@ export dagger_registry_password_env := env("REGISTRY_PASSWORD_ENV", "REGISTRY_PA
 export dagger_signing_key_env := env("SIGNING_KEY_ENV", "SIGNING_SECRET")
 export dagger_signing_password_env := env("SIGNING_PASSWORD_ENV", "SIGNING_PASSWORD")
 export source_uri := env("SOURCE_URI", "https://github.com/joshyorko/dsb-common")
+just := just_executable()
 
 [private]
 default:
     @just --list
+
+# Build the OCI payload image
+[group('Image')]
+build $target_image=image_name $tag=default_tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    podman build \
+        --format oci \
+        --file ./Containerfile \
+        --tag "${target_image}:${tag}" \
+        .
+
+# Build the OCI payload image for GitHub Actions in rootful container storage
+[group('Image')]
+build-ghcr $target_image=image_name $tag=default_tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ "${UID}" -gt "0" ]]; then
+        echo "Must run with sudo or as root."
+        exit 1
+    fi
+
+    "{{ just }}" build "${target_image}" "${tag}"
 
 # Show repo-local Dagger functions
 [group('Dagger')]

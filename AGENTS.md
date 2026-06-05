@@ -50,6 +50,10 @@ just --unstable --fmt --check -f system_files/dudley/usr/share/ublue-os/just/upd
 
 If a tool is unavailable locally, note that in your handoff and rely on the GitHub workflow to cover it.
 
+## GitHub Actions Build Storage
+
+`build.yml` calls `sudo -E just build-ghcr` so the recipe builds into rootful container storage, matching the `projectbluefin/actions/bootc-build/push-image` rootful `sudo -E podman push` path. Do not switch the build back to a rootless action unless the push step is changed too; rootless images are invisible to the rootful push store and fail with `image not known`.
+
 ## Dudley Bot Renovate
 
 This repo is managed by the central `joshyorko/renovate-config` runner. Keep repo-specific rules in `.github/renovate.json5`; do not add a repo-local Renovate workflow unless Josh explicitly asks for that runner model again.
