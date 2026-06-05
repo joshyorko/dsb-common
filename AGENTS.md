@@ -52,7 +52,7 @@ If a tool is unavailable locally, note that in your handoff and rely on the GitH
 
 ## GitHub Actions Build Storage
 
-`build.yml` builds with rootful `sudo buildah build` because `projectbluefin/actions/bootc-build/push-image` pushes with `sudo -E podman push`. Do not switch the build back to a rootless action unless the push step is changed too; rootless images are invisible to the rootful push store and fail with `image not known`.
+`build.yml` calls `sudo -E just build-ghcr` so the recipe builds into rootful container storage, matching the `projectbluefin/actions/bootc-build/push-image` rootful `sudo -E podman push` path. Do not switch the build back to a rootless action unless the push step is changed too; rootless images are invisible to the rootful push store and fail with `image not known`.
 
 ## Dudley Bot Renovate
 

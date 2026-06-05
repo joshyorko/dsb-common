@@ -45,6 +45,7 @@ jobs:
         uses: projectbluefin/actions/bootc-build/setup-runner@6274199cfb6666180ac2fd0ad5a41bc8440e0929 # v1
         with:
           storage-backend: none
+          install-tools: '["just"]'
 
       - name: Preflight publish
         id: preflight
@@ -74,11 +75,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          sudo buildah build \
-            --format oci \
-            --file ./Containerfile \
-            --tag "${IMAGE_NAME}:latest" \
-            .
+          sudo -E "$(command -v just)" build-ghcr "${IMAGE_NAME}" latest
 
           echo "image=${IMAGE_NAME}" >> "${GITHUB_OUTPUT}"
           echo "tags=${STEPS_TAGS}" >> "${GITHUB_OUTPUT}"
