@@ -101,5 +101,6 @@ jobs:
           signing-mode: keyless
           generate-sbom: "true"
           push-attestation: "true"
+          certificate-identity-regexp: '^https://github\.com/joshyorko/dsb-common/\.github/workflows/build\.yml@refs/heads/main$'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           image-name: ${{ env.IMAGE_NAME }}
