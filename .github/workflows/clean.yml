@@ -13,7 +13,7 @@ jobs:
       packages: write
     steps:
       - name: Delete images older than 90 days
-        uses: projectbluefin/actions/bootc-build/ghcr-cleanup@f5cd16cece77113396a11da320bd5205b76b9103 # v1
+        uses: projectbluefin/actions/bootc-build/ghcr-cleanup@6c2278adfcde0818079173b40f6c0f07a68c7198 # v1
         with:
           packages: dsb-common
           older-than: 90 days
