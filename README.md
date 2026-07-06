@@ -13,6 +13,8 @@ The image published to `ghcr.io/joshyorko/dsb-common` exports exactly two namesp
 
 Consumers should copy from those paths explicitly rather than assuming flattened `/usr` or `/etc` paths inside the OCI layer.
 
+The machine-readable Dudley payload contract lives at `contract/dudley-payload.v1.json`. It lists every file under `system_files/`, its final target path, kind, and selectors for consumers such as Bluefin/Fedora-family and future Ubuntu-family adapters. Use `scripts/install-payload.py --profile bluefin --dest <root>` for full current Dudley/Bluefin payload installation, and `scripts/install-payload.py --profile ubuntu --dest <root>` for the portable Ubuntu feasibility payload.
+
 ## Repository Layout
 
 ### `system_files/shared/`
@@ -87,6 +89,7 @@ Intended copy precedence:
 The repository ships only the minimal workflow needed to build and publish the OCI layer.
 
 - Pull requests validate shell payloads, Brewfile syntax, Flatpak preinstall files, just recipes, and the Chrome repo contract.
+- Pull requests validate the v1 payload contract and profile installer so every shipped file is represented exactly once.
 - Pull requests to `main` build the image for validation.
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.
 - Published images are keylessly signed with cosign, get an attached SPDX SBOM, and publish GitHub provenance attestations.

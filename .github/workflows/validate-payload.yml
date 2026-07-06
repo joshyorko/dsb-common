@@ -9,6 +9,9 @@ on:
       - main
     paths:
       - "system_files/**"
+      - "contract/**"
+      - "scripts/install-payload.py"
+      - "tests/**"
       - "AGENTS.md"
       - ".github/workflows/validate-payload.yml"
   merge_group:
@@ -115,3 +118,10 @@ jobs:
           test -f "$repo"
           grep -Fxq "[google-chrome]" "$repo"
           grep -Fxq "enabled=1" "$repo"
+
+      - name: Validate Dudley payload contract
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 -m unittest tests.test_payload_contract -v

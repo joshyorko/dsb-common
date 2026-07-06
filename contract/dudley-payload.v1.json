@@ -1,0 +1,232 @@
+{
+  "schema": "dudley-payload.v1",
+  "description": "Portable Dudley payload contract exported by dsb-common.",
+  "profiles": {
+    "bluefin": ["portable", "bluefin", "fedora-family", "gnome"],
+    "ubuntu": ["portable", "ubuntu", "gnome"]
+  },
+  "files": [
+    {
+      "source": "system_files/dudley/etc/dconf/db/distro.d/99-dudley-terminal-keybindings",
+      "target": "/etc/dconf/db/distro.d/99-dudley-terminal-keybindings",
+      "kind": "config",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/etc/dconf/db/local.d/.gitkeep",
+      "target": "/etc/dconf/db/local.d/.gitkeep",
+      "kind": "config",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/etc/flatpak/preinstall.d/dudley-default.preinstall",
+      "target": "/etc/flatpak/preinstall.d/dudley-default.preinstall",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/etc/flatpak/preinstall.d/dudley-dx.preinstall",
+      "target": "/etc/flatpak/preinstall.d/dudley-dx.preinstall",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/etc/skel/.config/Code - Insiders/User/settings.json",
+      "target": "/etc/skel/.config/Code - Insiders/User/settings.json",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/etc/skel/.config/Code/User/settings.json",
+      "target": "/etc/skel/.config/Code/User/settings.json",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/etc/xdg/autostart/dudley-random-wallpaper.desktop",
+      "target": "/etc/xdg/autostart/dudley-random-wallpaper.desktop",
+      "kind": "config",
+      "selectors": ["gnome", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/etc/yum.repos.d/google-chrome.repo",
+      "target": "/etc/yum.repos.d/google-chrome.repo",
+      "kind": "config",
+      "selectors": ["fedora-family", "bluefin", "build-only"]
+    },
+    {
+      "source": "system_files/dudley/usr/bin/dudley-build-info",
+      "target": "/usr/bin/dudley-build-info",
+      "kind": "executable",
+      "selectors": ["portable"]
+    },
+    {
+      "source": "system_files/dudley/usr/bin/dudley-random-wallpaper",
+      "target": "/usr/bin/dudley-random-wallpaper",
+      "kind": "executable",
+      "selectors": ["gnome", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-10.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-10.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-11.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-11.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-12.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-12.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-13.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-13.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-14.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-14.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-2.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-2.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-3.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-3.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-4.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-4.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-5.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-5.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-6.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-6.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-7.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-7.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-8.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-8.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-9.png",
+      "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-9.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override",
+      "target": "/usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override",
+      "kind": "config",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-ai.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-ai.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-cli.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-cli.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-dev.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-dev.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-ide.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-ide.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "target": "/usr/share/ublue-os/just/60-dudley.just",
+      "kind": "config",
+      "selectors": ["bluefin", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/just/update.just",
+      "target": "/usr/share/ublue-os/just/update.just",
+      "kind": "config",
+      "selectors": ["bluefin", "fedora-family", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh",
+      "target": "/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh",
+      "kind": "executable",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/vscode-extensions.list",
+      "target": "/usr/share/ublue-os/vscode-extensions.list",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/shared/etc/dconf/db/gdm.d/.gitkeep",
+      "target": "/etc/dconf/db/gdm.d/.gitkeep",
+      "kind": "config",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/shared/usr/share/ublue-os/just/60-custom.just",
+      "target": "/usr/share/ublue-os/just/60-custom.just",
+      "kind": "config",
+      "selectors": ["bluefin", "runtime-user"]
+    }
+  ]
+}
