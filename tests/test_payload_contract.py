@@ -1,0 +1,124 @@
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CONTRACT = ROOT / "contract" / "dudley-payload.v1.json"
+INSTALLER = ROOT / "scripts" / "install-payload.py"
+SYSTEM_FILES = ROOT / "system_files"
+
+
+class PayloadContractTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+        cls.files = cls.contract["files"]
+
+    def test_every_system_file_is_listed_once(self) -> None:
+        actual = {
+            str(path.relative_to(ROOT))
+            for path in SYSTEM_FILES.rglob("*")
+            if path.is_file()
+        }
+        declared_sources = [entry["source"] for entry in self.files]
+        declared = set(declared_sources)
+        duplicates = sorted(
+            source for source in declared if declared_sources.count(source) > 1
+        )
+
+        self.assertEqual([], duplicates)
+        self.assertEqual(len(declared_sources), len(declared))
+        self.assertEqual(actual, declared)
+
+    def test_declared_files_exist_and_have_valid_selectors(self) -> None:
+        valid_selectors = {
+            "portable",
+            "bluefin",
+            "fedora-family",
+            "ubuntu",
+            "gnome",
+            "runtime-user",
+            "build-only",
+        }
+
+        for entry in self.files:
+            with self.subTest(source=entry["source"]):
+                self.assertTrue((ROOT / entry["source"]).is_file())
+                self.assertTrue(entry["target"].startswith("/"))
+                self.assertIn(entry["kind"], {"file", "executable", "image", "config", "manifest"})
+                selectors = set(entry["selectors"])
+                self.assertTrue(selectors)
+                self.assertLessEqual(selectors, valid_selectors)
+
+    def test_fedora_only_payload_is_not_portable(self) -> None:
+        chrome_repo = next(
+            entry
+            for entry in self.files
+            if entry["source"].endswith("/etc/yum.repos.d/google-chrome.repo")
+        )
+
+        self.assertIn("fedora-family", chrome_repo["selectors"])
+        self.assertIn("bluefin", chrome_repo["selectors"])
+        self.assertNotIn("portable", chrome_repo["selectors"])
+        self.assertNotIn("ubuntu", chrome_repo["selectors"])
+
+    def test_bluefin_install_includes_current_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp)
+            subprocess.run(
+                [sys.executable, str(INSTALLER), "--profile", "bluefin", "--dest", str(dest)],
+                cwd=ROOT,
+                check=True,
+            )
+
+            self.assertTrue((dest / "etc/yum.repos.d/google-chrome.repo").is_file())
+            self.assertTrue((dest / "usr/bin/dudley-build-info").is_file())
+            self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())
+
+    def test_ubuntu_install_excludes_fedora_only_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp)
+            subprocess.run(
+                [sys.executable, str(INSTALLER), "--profile", "ubuntu", "--dest", str(dest)],
+                cwd=ROOT,
+                check=True,
+            )
+
+            self.assertFalse((dest / "etc/yum.repos.d/google-chrome.repo").exists())
+            self.assertTrue((dest / "usr/bin/dudley-build-info").is_file())
+            self.assertTrue((dest / "usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png").is_file())
+
+    def test_dry_run_does_not_write_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(INSTALLER),
+                    "--profile",
+                    "ubuntu",
+                    "--dest",
+                    str(dest),
+                    "--dry-run",
+                ],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["profile"], "ubuntu")
+            self.assertGreater(payload["selected_count"], 0)
+            self.assertFalse(any(dest.iterdir()))
+
+
+if __name__ == "__main__":
+    unittest.main()
