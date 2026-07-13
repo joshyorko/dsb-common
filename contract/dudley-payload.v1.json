@@ -205,6 +205,12 @@
       "selectors": ["bluefin", "fedora-family", "runtime-user"]
     },
     {
+      "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
+      "target": "/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
+      "kind": "executable",
+      "selectors": ["bluefin", "runtime-user"]
+    },
+    {
       "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh",
       "target": "/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh",
       "kind": "executable",

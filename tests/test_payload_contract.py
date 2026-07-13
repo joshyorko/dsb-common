@@ -119,6 +119,34 @@ class PayloadContractTests(unittest.TestCase):
             self.assertGreater(payload["selected_count"], 0)
             self.assertFalse(any(dest.iterdir()))
 
+    def test_bazaar_launcher_migration_removes_only_stale_rpm_launcher(self) -> None:
+        hook = (
+            ROOT
+            / "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d"
+            / "15-dudley-bazaar-launcher.sh"
+        )
+        self.assertTrue(hook.is_file())
+
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            launcher = home / ".local/share/applications/io.github.kolunmi.Bazaar.desktop"
+            launcher.parent.mkdir(parents=True)
+            launcher.write_text(
+                "[Desktop Entry]\nExec=bazaar window --auto-service %U\n",
+                encoding="utf-8",
+            )
+
+            env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
+            subprocess.run(["bash", str(hook)], cwd=ROOT, env=env, check=True)
+            self.assertFalse(launcher.exists())
+
+            launcher.write_text(
+                "[Desktop Entry]\nExec=/usr/bin/flatpak run io.github.kolunmi.Bazaar\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["bash", str(hook)], cwd=ROOT, env=env, check=True)
+            self.assertTrue(launcher.is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -38,6 +38,7 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 - `usr/share/ublue-os/homebrew/dudley-*.Brewfile`
 - `usr/share/ublue-os/just/60-dudley.just`
 - `usr/share/ublue-os/just/update.just`
+- `usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh`
 - `usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh`
 - `usr/share/ublue-os/vscode-extensions.list`
 
