@@ -205,6 +205,12 @@
       "selectors": ["bluefin", "fedora-family", "runtime-user"]
     },
     {
+      "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/12-dudley-desktop-parity.sh",
+      "target": "/usr/share/ublue-os/user-setup.hooks.d/12-dudley-desktop-parity.sh",
+      "kind": "executable",
+      "selectors": ["bluefin", "runtime-user"]
+    },
+    {
       "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
       "target": "/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
       "kind": "executable",

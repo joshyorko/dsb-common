@@ -56,7 +56,8 @@ Dudley's portable developer experience lives here instead of in a final product 
 - IDE/editor tooling in `dudley-ide.Brewfile`
 - extra Nerd Fonts from Bluefin common
 - DX Flatpaks in `dudley-dx.preinstall`
-- VS Code default settings and extension setup
+- VS Code defaults use JetBrains Mono 16, with a one-time migration for the previous generic monospace settings
+- existing Bluefin user profiles re-enable the upstream top-panel menu for system monitoring, settings, applications, documentation, and Ask Bluefin
 - `ujust dudley dx` as the user-space setup entrypoint
 - opt-in AI and agent tooling through `dudley-ai.Brewfile`, `ujust dudley ai`, and `ujust dudley agents`
 
