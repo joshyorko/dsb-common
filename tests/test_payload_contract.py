@@ -147,6 +147,72 @@ class PayloadContractTests(unittest.TestCase):
             subprocess.run(["bash", str(hook)], cwd=ROOT, env=env, check=True)
             self.assertTrue(launcher.is_file())
 
+    def test_desktop_parity_hook_restores_bluefin_panel_and_known_font_defaults(self) -> None:
+        hook = (
+            ROOT
+            / "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d"
+            / "12-dudley-desktop-parity.sh"
+        )
+        self.assertTrue(hook.is_file())
+
+        skel = json.loads(
+            (
+                ROOT
+                / "system_files/dudley/etc/skel/.config/Code - Insiders/User/settings.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual("JetBrains Mono", skel["terminal.integrated.fontFamily"])
+        self.assertEqual(16, skel["terminal.integrated.fontSize"])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            fake_bin = root / "bin"
+            settings = home / ".config/Code - Insiders/User/settings.json"
+            log = root / "gnome-extensions.log"
+            settings.parent.mkdir(parents=True)
+            fake_bin.mkdir()
+            settings.write_text(
+                json.dumps(
+                    {
+                        "editor.fontFamily": "'monospace'",
+                        "editor.fontSize": 14,
+                        "terminal.integrated.fontFamily": "monospace",
+                        "terminal.integrated.fontSize": 14,
+                        "dudley.test": "preserved",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            fake_gnome_extensions = fake_bin / "gnome-extensions"
+            fake_gnome_extensions.write_text(
+                "#!/usr/bin/env bash\nprintf '%s\\n' \"$*\" >>\"${GNOME_EXTENSIONS_LOG}\"\n",
+                encoding="utf-8",
+            )
+            fake_gnome_extensions.chmod(0o755)
+
+            env = {
+                "HOME": str(home),
+                "PATH": f"{fake_bin}:/usr/bin:/bin",
+                "GNOME_EXTENSIONS_LOG": str(log),
+            }
+            subprocess.run(["bash", str(hook)], cwd=ROOT, env=env, check=True)
+
+            migrated = json.loads(settings.read_text(encoding="utf-8"))
+            self.assertEqual("JetBrains Mono", migrated["terminal.integrated.fontFamily"])
+            self.assertEqual(16, migrated["terminal.integrated.fontSize"])
+            self.assertTrue(migrated["editor.fontFamily"].startswith("'JetBrains Mono'"))
+            self.assertEqual(16, migrated["editor.fontSize"])
+            self.assertEqual("preserved", migrated["dudley.test"])
+            self.assertEqual(
+                "enable custom-command-list@storageb.github.com",
+                log.read_text(encoding="utf-8").strip(),
+            )
+
+            subprocess.run(["bash", str(hook)], cwd=ROOT, env=env, check=True)
+            self.assertEqual(1, len(log.read_text(encoding="utf-8").splitlines()))
+
 
 if __name__ == "__main__":
     unittest.main()

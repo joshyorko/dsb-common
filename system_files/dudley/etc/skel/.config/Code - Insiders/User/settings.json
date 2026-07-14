@@ -1,5 +1,10 @@
 {
     "window.titleBarStyle": "custom",
-    "editor.fontFamily": "'Cascadia Code', 'Droid Sans Mono', 'monospace', monospace, 'Symbols Nerd Font Mono'",
+    "editor.fontFamily": "'JetBrains Mono', 'Cascadia Code', 'Droid Sans Mono', monospace, 'Symbols Nerd Font Mono'",
+    "editor.fontSize": 16,
+    "editor.fontLigatures": true,
+    "terminal.integrated.fontFamily": "JetBrains Mono",
+    "terminal.integrated.fontSize": 16,
+    "terminal.integrated.fontLigatures.enabled": true,
     "update.mode": "none"
 }
