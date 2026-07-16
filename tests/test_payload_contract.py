@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -13,6 +16,12 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "contract" / "dudley-payload.v1.json"
 INSTALLER = ROOT / "scripts" / "install-payload.py"
 SYSTEM_FILES = ROOT / "system_files"
+DUDLEY_SYSTEM_FILES = SYSTEM_FILES / "dudley"
+WALLPAPER_DIR = DUDLEY_SYSTEM_FILES / "usr/share/backgrounds/dudley"
+WALLPAPER_CATALOG = (
+    DUDLEY_SYSTEM_FILES / "usr/share/gnome-background-properties/dudley.xml"
+)
+NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-bedroom.png"
 
 
 class PayloadContractTests(unittest.TestCase):
@@ -80,7 +89,59 @@ class PayloadContractTests(unittest.TestCase):
 
             self.assertTrue((dest / "etc/yum.repos.d/google-chrome.repo").is_file())
             self.assertTrue((dest / "usr/bin/dudley-build-info").is_file())
+            self.assertTrue(
+                (
+                    dest
+                    / "usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png"
+                ).is_file()
+            )
+            self.assertTrue(
+                (dest / "usr/share/gnome-background-properties/dudley.xml").is_file()
+            )
             self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())
+
+    def test_gnome_wallpaper_catalog_covers_dudley_payload(self) -> None:
+        catalog = ET.parse(WALLPAPER_CATALOG)
+        self.assertEqual("wallpapers", catalog.getroot().tag)
+
+        catalog_paths = []
+        primary_paths = []
+        for wallpaper in catalog.findall("wallpaper"):
+            with self.subTest(name=wallpaper.findtext("name")):
+                name = (wallpaper.findtext("name") or "").strip()
+                filename = (wallpaper.findtext("filename") or "").strip()
+                filename_dark = (wallpaper.findtext("filename-dark") or "").strip()
+
+                self.assertTrue(name)
+                self.assertEqual("false", wallpaper.get("deleted"))
+                self.assertEqual("zoom", wallpaper.findtext("options"))
+                for path in (filename, filename_dark):
+                    self.assertTrue(
+                        path.startswith("/usr/share/backgrounds/dudley/")
+                    )
+                    self.assertTrue(
+                        (DUDLEY_SYSTEM_FILES / path.lstrip("/")).is_file()
+                    )
+                    catalog_paths.append(path)
+                primary_paths.append(filename)
+
+        payload_paths = {
+            f"/usr/share/backgrounds/dudley/{path.name}"
+            for path in WALLPAPER_DIR.iterdir()
+            if path.suffix.lower() in {".jpeg", ".jpg", ".png"}
+        }
+        self.assertEqual(len(primary_paths), len(set(primary_paths)))
+        self.assertEqual(payload_paths, set(catalog_paths))
+
+    def test_new_dudley_wallpaper_has_expected_png_integrity(self) -> None:
+        data = NEW_WALLPAPER.read_bytes()
+
+        self.assertTrue(data.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertEqual((1672, 941), struct.unpack(">II", data[16:24]))
+        self.assertEqual(
+            "95f246c47d62156351c2d491bbd80030b8fdd96e603a38cefc9375759928c2f9",
+            hashlib.sha256(data).hexdigest(),
+        )
 
     def test_ubuntu_install_excludes_fedora_only_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

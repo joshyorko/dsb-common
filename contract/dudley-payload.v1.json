@@ -67,6 +67,12 @@
       "selectors": ["gnome", "runtime-user"]
     },
     {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png",
+      "target": "/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
       "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png",
       "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png",
       "kind": "image",
@@ -148,6 +154,12 @@
       "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-9.png",
       "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-9.png",
       "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/gnome-background-properties/dudley.xml",
+      "target": "/usr/share/gnome-background-properties/dudley.xml",
+      "kind": "config",
       "selectors": ["gnome"]
     },
     {
