@@ -73,6 +73,12 @@
       "selectors": ["gnome"]
     },
     {
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-study.png",
+      "target": "/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-study.png",
+      "kind": "image",
+      "selectors": ["gnome"]
+    },
+    {
       "source": "system_files/dudley/usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png",
       "target": "/usr/share/backgrounds/dudley/dudleys-second-bedroom-1.png",
       "kind": "image",

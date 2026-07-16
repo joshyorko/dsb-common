@@ -21,7 +21,8 @@ WALLPAPER_DIR = DUDLEY_SYSTEM_FILES / "usr/share/backgrounds/dudley"
 WALLPAPER_CATALOG = (
     DUDLEY_SYSTEM_FILES / "usr/share/gnome-background-properties/dudley.xml"
 )
-NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-bedroom.png"
+FIRST_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-bedroom.png"
+SECOND_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-study.png"
 
 
 class PayloadContractTests(unittest.TestCase):
@@ -96,6 +97,12 @@ class PayloadContractTests(unittest.TestCase):
                 ).is_file()
             )
             self.assertTrue(
+                (
+                    dest
+                    / "usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-study.png"
+                ).is_file()
+            )
+            self.assertTrue(
                 (dest / "usr/share/gnome-background-properties/dudley.xml").is_file()
             )
             self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())
@@ -133,13 +140,23 @@ class PayloadContractTests(unittest.TestCase):
         self.assertEqual(len(primary_paths), len(set(primary_paths)))
         self.assertEqual(payload_paths, set(catalog_paths))
 
-    def test_new_dudley_wallpaper_has_expected_png_integrity(self) -> None:
-        data = NEW_WALLPAPER.read_bytes()
+    def test_first_new_dudley_wallpaper_has_expected_png_integrity(self) -> None:
+        data = FIRST_NEW_WALLPAPER.read_bytes()
 
         self.assertTrue(data.startswith(b"\x89PNG\r\n\x1a\n"))
         self.assertEqual((1672, 941), struct.unpack(">II", data[16:24]))
         self.assertEqual(
             "95f246c47d62156351c2d491bbd80030b8fdd96e603a38cefc9375759928c2f9",
+            hashlib.sha256(data).hexdigest(),
+        )
+
+    def test_second_new_dudley_wallpaper_has_expected_png_integrity(self) -> None:
+        data = SECOND_NEW_WALLPAPER.read_bytes()
+
+        self.assertTrue(data.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertEqual((1672, 941), struct.unpack(">II", data[16:24]))
+        self.assertEqual(
+            "66465575278841d89f2a73ca39bdd0fbb81702c78daaab66978d8c971acba9c7",
             hashlib.sha256(data).hexdigest(),
         )
 
