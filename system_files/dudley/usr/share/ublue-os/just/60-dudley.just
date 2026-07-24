@@ -10,6 +10,8 @@
 #   ujust dudley brew ide
 #   ujust dudley extensions
 #   ujust dudley extensions force
+#   ujust dudley theme apply wellness-floor
+#   ujust dudley wallpaper random wellness-floor
 
 # ujust dudley list
 dudley action="setup" target="all" mode="":
@@ -105,6 +107,12 @@ dudley action="setup" target="all" mode="":
         echo "  ujust dudley brew ide        # install IDE/editor Brewfile only"
         echo "  ujust dudley extensions      # install/update VS Code extensions"
         echo "  ujust dudley extensions force"
+        echo "  ujust dudley theme list"
+        echo "  ujust dudley theme current"
+        echo "  ujust dudley theme apply wellness-floor"
+        echo "  ujust dudley theme reset"
+        echo "  ujust dudley wallpaper list wellness-floor"
+        echo "  ujust dudley wallpaper random wellness-floor"
     }
 
     case "$ACTION" in
@@ -171,6 +179,35 @@ dudley action="setup" target="all" mode="":
             ;;
         extensions)
             run_extensions
+            ;;
+        theme)
+            case "$TARGET" in
+                list|current|reset)
+                    /usr/bin/dudley-theme "$TARGET"
+                    ;;
+                apply)
+                    [[ -n "$MODE" ]] || {
+                        echo "ERROR: theme apply requires a theme id"
+                        exit 1
+                    }
+                    /usr/bin/dudley-theme apply "$MODE"
+                    ;;
+                *)
+                    echo "ERROR: Unknown theme action '$TARGET'"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        wallpaper)
+            case "$TARGET" in
+                list|random)
+                    /usr/bin/dudley-wallpaper "$TARGET" "${MODE:-default}"
+                    ;;
+                *)
+                    echo "ERROR: Unknown wallpaper action '$TARGET'"
+                    exit 1
+                    ;;
+            esac
             ;;
         dx)
             run_default_bundles

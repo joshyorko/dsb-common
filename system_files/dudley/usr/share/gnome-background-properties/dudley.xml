@@ -97,4 +97,22 @@
     <filename-dark>/usr/share/backgrounds/dudley/dudleys-second-bedroom-14.png</filename-dark>
     <options>zoom</options>
   </wallpaper>
+  <wallpaper deleted="false">
+    <name>Dudley Wellness Floor - Wellness Room</name>
+    <filename>/usr/share/dudley/themes/wellness-floor/wallpapers/wellness-room.png</filename>
+    <filename-dark>/usr/share/dudley/themes/wellness-floor/wallpapers/wellness-room.png</filename-dark>
+    <options>zoom</options>
+  </wallpaper>
+  <wallpaper deleted="false">
+    <name>Dudley Wellness Floor - Refinement Terminal</name>
+    <filename>/usr/share/dudley/themes/wellness-floor/wallpapers/refinement-terminal.png</filename>
+    <filename-dark>/usr/share/dudley/themes/wellness-floor/wallpapers/refinement-terminal.png</filename-dark>
+    <options>zoom</options>
+  </wallpaper>
+  <wallpaper deleted="false">
+    <name>Dudley Wellness Floor - Second Floor Corridor</name>
+    <filename>/usr/share/dudley/themes/wellness-floor/wallpapers/second-floor-corridor.png</filename>
+    <filename-dark>/usr/share/dudley/themes/wellness-floor/wallpapers/second-floor-corridor.png</filename-dark>
+    <options>zoom</options>
+  </wallpaper>
 </wallpapers>

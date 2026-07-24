@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# Apply Dudley-managed theme assets without requiring root.
+set -euo pipefail
+
+readonly THEMES_DIR="${DUDLEY_THEMES_DIR:-/usr/share/dudley/themes}"
+readonly CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dudley"
+readonly STATE_FILE="$CONFIG_DIR/theme"
+readonly GENERATED_DIR="$CONFIG_DIR/generated"
+readonly RECEIPT_FILE="$CONFIG_DIR/theme-receipt.json"
+
+usage() {
+    echo "Usage: dudley-theme {list|current|apply <theme-id> [--force]|reset}" >&2
+}
+
+manifest_value() {
+    python3 - "$1" "$2" <<'PY'
+import json, pathlib, sys
+value = json.loads(pathlib.Path(sys.argv[1]).read_text())
+for key in sys.argv[2].split("."):
+    value = value[key]
+print(value)
+PY
+}
+
+merge_vscode() {
+    local fragment="$1"
+    local settings
+    for settings in \
+        "$HOME/.config/Code/User/settings.json" \
+        "$HOME/.config/Code - Insiders/User/settings.json"; do
+        [[ -f "$settings" ]] || continue
+        python3 - "$settings" "$fragment" <<'PY'
+import json, pathlib, sys
+target, fragment = map(pathlib.Path, sys.argv[1:])
+current = json.loads(target.read_text())
+update = json.loads(fragment.read_text())
+for key, value in update.items():
+    if isinstance(value, dict) and isinstance(current.get(key), dict):
+        current[key].update(value)
+    else:
+        current[key] = value
+temporary = target.with_suffix(".json.dudley-tmp")
+temporary.write_text(json.dumps(current, indent=2) + "\n")
+temporary.replace(target)
+PY
+    done
+}
+
+list_themes() {
+    local manifest
+    for manifest in "$THEMES_DIR"/*/manifest.json; do
+        [[ -f "$manifest" ]] || continue
+        printf '%s\t%s\n' "$(manifest_value "$manifest" id)" "$(manifest_value "$manifest" name)"
+    done
+}
+
+current_theme() {
+    [[ -f "$STATE_FILE" ]] && cat "$STATE_FILE" || echo "none"
+}
+
+apply_theme() {
+    local theme="$1"
+    local force="${2:-}"
+    [[ "$theme" =~ ^[a-z0-9][a-z0-9-]*$ ]] || {
+        echo "Invalid theme id: $theme" >&2
+        return 1
+    }
+    [[ -z "$force" || "$force" == "--force" ]] || { usage; return 2; }
+    local root="$THEMES_DIR/$theme"
+    local manifest="$root/manifest.json"
+    [[ -f "$manifest" ]] || {
+        echo "Unknown theme: $theme" >&2
+        return 1
+    }
+    if [[ "$force" != "--force" && -f "$STATE_FILE" && "$(cat "$STATE_FILE")" == "$theme" && -f "$RECEIPT_FILE" ]]; then
+        echo "$theme is already applied"
+        return 0
+    fi
+
+    mkdir -p "$GENERATED_DIR"
+    install -m 0644 "$root/$(manifest_value "$manifest" assets.kitty)" "$GENERATED_DIR/kitty.conf"
+    install -m 0644 "$root/$(manifest_value "$manifest" assets.ghostty)" "$GENERATED_DIR/ghostty.theme"
+    install -m 0644 "$root/$(manifest_value "$manifest" assets.neovim)" "$GENERATED_DIR/neovim.lua"
+    install -m 0644 "$root/$(manifest_value "$manifest" assets.btop)" "$GENERATED_DIR/btop.theme"
+    merge_vscode "$root/$(manifest_value "$manifest" assets.vscode)"
+
+    if command -v dconf >/dev/null 2>&1; then
+        dconf load / <"$root/$(manifest_value "$manifest" gnome.dconf)" || true
+    elif command -v gsettings >/dev/null 2>&1; then
+        gsettings set org.gnome.desktop.interface color-scheme prefer-dark || true
+    fi
+    if command -v gsettings >/dev/null 2>&1 &&
+        gsettings writable org.gnome.desktop.interface accent-color >/dev/null 2>&1; then
+        gsettings set org.gnome.desktop.interface accent-color blue || true
+    fi
+    /usr/bin/dudley-wallpaper set "$theme/$(basename "$(manifest_value "$manifest" assets.default_wallpaper)")"
+
+    printf '%s\n' "$theme" >"$STATE_FILE"
+    python3 - "$manifest" "$RECEIPT_FILE" <<'PY'
+import datetime, json, pathlib, sys
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
+receipt = {
+    "schema_version": 1,
+    "theme": manifest["id"],
+    "theme_version": manifest["version"],
+    "applied_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+}
+pathlib.Path(sys.argv[2]).write_text(json.dumps(receipt, indent=2) + "\n")
+PY
+    echo "Applied $theme"
+}
+
+reset_theme() {
+    rm -rf -- "$GENERATED_DIR"
+    rm -f -- "$STATE_FILE" "$RECEIPT_FILE"
+    if command -v gsettings >/dev/null 2>&1; then
+        gsettings reset org.gnome.desktop.interface color-scheme || true
+        gsettings reset org.gnome.desktop.interface accent-color || true
+    fi
+    echo "Dudley-managed theme state reset"
+}
+
+case "${1:-}" in
+    list) [[ $# -eq 1 ]] || { usage; exit 2; }; list_themes ;;
+    current) [[ $# -eq 1 ]] || { usage; exit 2; }; current_theme ;;
+    apply) [[ $# -ge 2 && $# -le 3 ]] || { usage; exit 2; }; apply_theme "$2" "${3:-}" ;;
+    reset) [[ $# -eq 1 ]] || { usage; exit 2; }; reset_theme ;;
+    *) usage; exit 2 ;;
+esac

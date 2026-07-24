@@ -67,6 +67,18 @@
       "selectors": ["gnome", "runtime-user"]
     },
     {
+      "source": "system_files/dudley/usr/bin/dudley-theme",
+      "target": "/usr/bin/dudley-theme",
+      "kind": "executable",
+      "selectors": ["portable", "gnome", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/bin/dudley-wallpaper",
+      "target": "/usr/bin/dudley-wallpaper",
+      "kind": "executable",
+      "selectors": ["portable", "gnome", "runtime-user"]
+    },
+    {
       "source": "system_files/dudley/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png",
       "target": "/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png",
       "kind": "image",
@@ -175,6 +187,72 @@
       "selectors": ["gnome"]
     },
     {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/btop/dudley-wellness-floor.theme",
+      "target": "/usr/share/dudley/themes/wellness-floor/btop/dudley-wellness-floor.theme",
+      "kind": "config",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/gnome.dconf",
+      "target": "/usr/share/dudley/themes/wellness-floor/gnome.dconf",
+      "kind": "config",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/manifest.json",
+      "target": "/usr/share/dudley/themes/wellness-floor/manifest.json",
+      "kind": "manifest",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/neovim/dudley-wellness-floor.lua",
+      "target": "/usr/share/dudley/themes/wellness-floor/neovim/dudley-wellness-floor.lua",
+      "kind": "config",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/palette.toml",
+      "target": "/usr/share/dudley/themes/wellness-floor/palette.toml",
+      "kind": "config",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/terminal/ghostty.theme",
+      "target": "/usr/share/dudley/themes/wellness-floor/terminal/ghostty.theme",
+      "kind": "config",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/terminal/kitty.conf",
+      "target": "/usr/share/dudley/themes/wellness-floor/terminal/kitty.conf",
+      "kind": "config",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/vscode/settings-fragment.json",
+      "target": "/usr/share/dudley/themes/wellness-floor/vscode/settings-fragment.json",
+      "kind": "config",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/wallpapers/refinement-terminal.png",
+      "target": "/usr/share/dudley/themes/wellness-floor/wallpapers/refinement-terminal.png",
+      "kind": "image",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/wallpapers/second-floor-corridor.png",
+      "target": "/usr/share/dudley/themes/wellness-floor/wallpapers/second-floor-corridor.png",
+      "kind": "image",
+      "selectors": ["portable", "gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/themes/wellness-floor/wallpapers/wellness-room.png",
+      "target": "/usr/share/dudley/themes/wellness-floor/wallpapers/wellness-room.png",
+      "kind": "image",
+      "selectors": ["portable", "gnome"]
+    },
+    {
       "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-ai.Brewfile",
       "target": "/usr/share/ublue-os/homebrew/dudley-ai.Brewfile",
       "kind": "manifest",
@@ -239,6 +317,12 @@
       "target": "/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh",
       "kind": "executable",
       "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/25-dudley-theme.sh",
+      "target": "/usr/share/ublue-os/user-setup.hooks.d/25-dudley-theme.sh",
+      "kind": "executable",
+      "selectors": ["portable", "gnome", "runtime-user"]
     },
     {
       "source": "system_files/dudley/usr/share/ublue-os/vscode-extensions.list",

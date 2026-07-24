@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# List and select Dudley wallpapers for the current GNOME user session.
+set -euo pipefail
+
+readonly THEMES_DIR="${DUDLEY_THEMES_DIR:-/usr/share/dudley/themes}"
+readonly LEGACY_DIR="${DUDLEY_WALLPAPER_DIR:-/usr/share/backgrounds/dudley}"
+readonly STATE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dudley/wallpaper"
+
+usage() {
+    echo "Usage: dudley-wallpaper {list [theme]|random [theme]|set <theme>/<filename>}" >&2
+}
+
+wallpaper_dir() {
+    local theme="${1:-default}"
+    if [[ "$theme" == "default" ]]; then
+        printf '%s\n' "$LEGACY_DIR"
+    elif [[ "$theme" =~ ^[a-z0-9][a-z0-9-]*$ ]] && [[ -f "$THEMES_DIR/$theme/manifest.json" ]]; then
+        printf '%s\n' "$THEMES_DIR/$theme/wallpapers"
+    else
+        echo "Unknown wallpaper collection: $theme" >&2
+        return 1
+    fi
+}
+
+list_wallpapers() {
+    local theme="${1:-default}"
+    local dir
+    dir="$(wallpaper_dir "$theme")"
+    find "$dir" -maxdepth 1 -type f \
+        \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) \
+        -printf "$theme/%f\n" | sort
+}
+
+set_wallpaper() {
+    local selection="$1"
+    local theme="${selection%%/*}"
+    local filename="${selection#*/}"
+    local dir path uri
+    [[ "$selection" == */* && "$filename" != */* ]] || {
+        echo "Wallpaper must be <theme>/<filename>" >&2
+        return 1
+    }
+    dir="$(wallpaper_dir "$theme")"
+    path="$dir/$filename"
+    [[ -f "$path" ]] || {
+        echo "Wallpaper not found: $selection" >&2
+        return 1
+    }
+    command -v gsettings >/dev/null 2>&1 || {
+        echo "gsettings not found; cannot set wallpaper" >&2
+        return 1
+    }
+    uri="file://$path"
+    gsettings set org.gnome.desktop.background picture-uri "$uri"
+    gsettings set org.gnome.desktop.background picture-uri-dark "$uri"
+    gsettings set org.gnome.desktop.screensaver picture-uri "$uri" || true
+    mkdir -p "$(dirname "$STATE_FILE")"
+    printf '%s\n' "$selection" >"$STATE_FILE"
+    echo "$selection"
+}
+
+random_wallpaper() {
+    local theme="${1:-default}"
+    local -a wallpapers=()
+    mapfile -t wallpapers < <(list_wallpapers "$theme")
+    ((${#wallpapers[@]} > 0)) || {
+        echo "No wallpapers found for $theme" >&2
+        return 1
+    }
+    local choice="${wallpapers[$((RANDOM % ${#wallpapers[@]}))]}"
+    if ((${#wallpapers[@]} > 1)) && [[ -f "$STATE_FILE" ]] && [[ "$(cat "$STATE_FILE")" == "$choice" ]]; then
+        choice="${wallpapers[$(((RANDOM + 1) % ${#wallpapers[@]}))]}"
+    fi
+    set_wallpaper "$choice"
+}
+
+case "${1:-}" in
+    list) list_wallpapers "${2:-default}" ;;
+    random) random_wallpaper "${2:-default}" ;;
+    set) [[ $# -eq 2 ]] || { usage; exit 2; }; set_wallpaper "$2" ;;
+    *) usage; exit 2 ;;
+esac

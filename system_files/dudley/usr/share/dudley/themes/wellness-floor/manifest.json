@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "id": "wellness-floor",
+  "name": "Dudley Wellness Floor",
+  "description": "Lumon-inspired dark blue GNOME theme pack for Dudley.",
+  "version": "0.1.0",
+  "platform": {
+    "desktop": "gnome",
+    "profiles": ["bluefin", "ubuntu"]
+  },
+  "palette": "palette.toml",
+  "gnome": {
+    "dconf": "gnome.dconf",
+    "color_scheme": "prefer-dark",
+    "accent": "blue"
+  },
+  "assets": {
+    "kitty": "terminal/kitty.conf",
+    "ghostty": "terminal/ghostty.theme",
+    "vscode": "vscode/settings-fragment.json",
+    "neovim": "neovim/dudley-wellness-floor.lua",
+    "btop": "btop/dudley-wellness-floor.theme",
+    "wallpapers": [
+      "wallpapers/wellness-room.png",
+      "wallpapers/refinement-terminal.png",
+      "wallpapers/second-floor-corridor.png"
+    ],
+    "default_wallpaper": "wallpapers/wellness-room.png"
+  },
+  "managed": {
+    "state_file": "~/.config/dudley/theme",
+    "generated_dir": "~/.config/dudley/generated",
+    "receipt_file": "~/.config/dudley/theme-receipt.json"
+  }
+}

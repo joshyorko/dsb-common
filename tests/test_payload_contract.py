@@ -18,6 +18,10 @@ INSTALLER = ROOT / "scripts" / "install-payload.py"
 SYSTEM_FILES = ROOT / "system_files"
 DUDLEY_SYSTEM_FILES = SYSTEM_FILES / "dudley"
 WALLPAPER_DIR = DUDLEY_SYSTEM_FILES / "usr/share/backgrounds/dudley"
+WELLNESS_WALLPAPER_DIR = (
+    DUDLEY_SYSTEM_FILES
+    / "usr/share/dudley/themes/wellness-floor/wallpapers"
+)
 WALLPAPER_CATALOG = (
     DUDLEY_SYSTEM_FILES / "usr/share/gnome-background-properties/dudley.xml"
 )
@@ -106,6 +110,14 @@ class PayloadContractTests(unittest.TestCase):
                 (dest / "usr/share/gnome-background-properties/dudley.xml").is_file()
             )
             self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())
+            self.assertTrue((dest / "usr/bin/dudley-theme").is_file())
+            self.assertTrue((dest / "usr/bin/dudley-wallpaper").is_file())
+            self.assertTrue(
+                (
+                    dest
+                    / "usr/share/dudley/themes/wellness-floor/manifest.json"
+                ).is_file()
+            )
 
     def test_gnome_wallpaper_catalog_covers_dudley_payload(self) -> None:
         catalog = ET.parse(WALLPAPER_CATALOG)
@@ -125,6 +137,9 @@ class PayloadContractTests(unittest.TestCase):
                 for path in (filename, filename_dark):
                     self.assertTrue(
                         path.startswith("/usr/share/backgrounds/dudley/")
+                        or path.startswith(
+                            "/usr/share/dudley/themes/wellness-floor/wallpapers/"
+                        )
                     )
                     self.assertTrue(
                         (DUDLEY_SYSTEM_FILES / path.lstrip("/")).is_file()
@@ -137,6 +152,11 @@ class PayloadContractTests(unittest.TestCase):
             for path in WALLPAPER_DIR.iterdir()
             if path.suffix.lower() in {".jpeg", ".jpg", ".png"}
         }
+        payload_paths.update(
+            f"/usr/share/dudley/themes/wellness-floor/wallpapers/{path.name}"
+            for path in WELLNESS_WALLPAPER_DIR.iterdir()
+            if path.suffix.lower() in {".jpeg", ".jpg", ".png"}
+        )
         self.assertEqual(len(primary_paths), len(set(primary_paths)))
         self.assertEqual(payload_paths, set(catalog_paths))
 

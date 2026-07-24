@@ -1,0 +1,11 @@
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+
+[org/gnome/desktop/background]
+picture-options='zoom'
+color-shading-type='solid'
+primary-color='#16242d'
+secondary-color='#16242d'
+
+[org/gnome/desktop/screensaver]
+picture-options='zoom'
