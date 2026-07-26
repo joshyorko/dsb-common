@@ -3,8 +3,10 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -136,6 +138,88 @@ class StateStoreTests(unittest.TestCase):
         self.assertEqual("b", store.recover_pointer())
         self.assertEqual("b", store.current_id())
         self.assertEqual("a", store.previous_id())
+
+    def test_commit_reserves_sequence_from_separatorless_journal_name(self) -> None:
+        store = StateStore(self.root)
+        store.create_generation("a", {"state": "ACTIVE"})
+        store.commit_generation("a")
+        store.create_generation("b", {"state": "ACTIVE"})
+        store._atomic_json(
+            store.transactions_path / "00000000000000000002.json",
+            {
+                "generation_id": "b",
+                "previous_generation_id": "a",
+                "sequence": 2,
+                "state": "COMMITTED",
+            },
+        )
+        store.create_generation("c", {"state": "ACTIVE"})
+
+        store.commit_generation("c")
+
+        sequences = sorted(
+            json.loads(path.read_text(encoding="utf-8"))["sequence"]
+            for path in store.transactions_path.glob("*.json")
+        )
+        self.assertEqual([1, 2, 3], sequences)
+        self.assertEqual("c", store.current_id())
+        self.assertEqual("b", store.previous_id())
+
+    def test_recover_pointer_completes_commit_interrupted_after_journal_write(self) -> None:
+        store = StateStore(self.root)
+        store.create_generation("a", {"state": "ACTIVE"})
+        store.commit_generation("a")
+        store.create_generation("b", {"state": "ACTIVE"})
+
+        with patch.object(
+            store,
+            "_after_journal_persisted",
+            side_effect=InterruptedError("simulated crash"),
+        ):
+            with self.assertRaises(InterruptedError):
+                store.commit_generation("b")
+
+        journals = list(store.transactions_path.glob("*.json"))
+        prepared = [
+            path
+            for path in journals
+            if json.loads(path.read_text(encoding="utf-8"))["state"] == "PREPARED"
+        ]
+        self.assertEqual(1, len(prepared))
+        self.assertEqual("a", store.current_id())
+        self.assertEqual("b", store.recover_pointer())
+        self.assertEqual("b", store.current_id())
+        self.assertEqual("a", store.previous_id())
+
+    def test_concurrent_commits_allocate_unique_journal_sequences(self) -> None:
+        store = StateStore(self.root)
+        store.create_generation("a", {"state": "ACTIVE"})
+        store.create_generation("b", {"state": "ACTIVE"})
+        start = threading.Barrier(3)
+        errors: list[BaseException] = []
+
+        def commit(generation_id: str) -> None:
+            try:
+                start.wait()
+                StateStore(self.root).commit_generation(generation_id)
+            except BaseException as error:
+                errors.append(error)
+
+        workers = [threading.Thread(target=commit, args=(generation_id,)) for generation_id in ("a", "b")]
+        for worker in workers:
+            worker.start()
+        start.wait()
+        for worker in workers:
+            worker.join()
+
+        self.assertEqual([], errors)
+        records = [
+            json.loads(path.read_text(encoding="utf-8"))
+            for path in store.transactions_path.glob("*.json")
+        ]
+        self.assertEqual([1, 2], sorted(record["sequence"] for record in records))
+        latest = max(records, key=lambda record: record["sequence"])
+        self.assertEqual(latest["generation_id"], store.recover_pointer())
 
 
 if __name__ == "__main__":

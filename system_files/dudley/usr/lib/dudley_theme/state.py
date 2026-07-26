@@ -72,6 +72,7 @@ class StateStore:
                 "state": "PREPARED",
             }
             self._create_journal(journal, record)
+            self._after_journal_persisted(journal)
             self._replace_pointer_pair(generation_id, previous_id)
             record["state"] = "COMMITTED"
             self._atomic_json(journal, record)
@@ -173,9 +174,15 @@ class StateStore:
     def _next_transaction_sequence(self) -> int:
         highest_sequence = 0
         for journal in self.transactions_path.glob("*.json"):
-            prefix, separator, _ = journal.name.partition("-")
-            if separator and prefix.isdecimal():
+            prefix = journal.stem.partition("-")[0]
+            if prefix.isdecimal():
                 highest_sequence = max(highest_sequence, int(prefix))
+            try:
+                sequence = json.loads(journal.read_text(encoding="utf-8"))["sequence"]
+            except (json.JSONDecodeError, KeyError, OSError, TypeError):
+                continue
+            if isinstance(sequence, int):
+                highest_sequence = max(highest_sequence, sequence)
         return highest_sequence + 1
 
     def _latest_transaction(self) -> tuple[Path, dict[str, Any]] | None:
@@ -240,6 +247,9 @@ class StateStore:
             output.flush()
             os.fsync(output.fileno())
         self._fsync_directory(path.parent)
+
+    def _after_journal_persisted(self, journal: Path) -> None:
+        """Test seam for simulating a crash after durable intent creation."""
 
     @contextmanager
     def _transaction_lock(self) -> Iterator[None]:
