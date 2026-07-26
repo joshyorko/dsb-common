@@ -54,15 +54,29 @@ class FakeAdapter(Adapter):
         *,
         fail_apply: bool = False,
         raise_apply: bool = False,
+        raise_restore: bool = False,
+        raise_verify: bool = False,
+        reject_preflight: bool = False,
+        captures: dict[str, int] | None = None,
         activity: dict[str, int] | None = None,
     ) -> None:
         self.adapter_id = adapter_id
         self.surface = surface
         self.fail_apply = fail_apply
         self.raise_apply = raise_apply
+        self.raise_restore = raise_restore
+        self.raise_verify = raise_verify
+        self.reject_preflight = reject_preflight
+        self.captures = captures
         self.activity = activity
 
+    def preflight(self, context: ThemeContext) -> AdapterStatus:
+        del context
+        return AdapterStatus("unsupported" if self.reject_preflight else "verified")
+
     def capture(self, context: ThemeContext) -> list[ResourceRecord]:
+        if self.captures is not None:
+            self.captures[self.adapter_id] = self.captures.get(self.adapter_id, 0) + 1
         return [
             ResourceRecord(
                 adapter=self.adapter_id,
@@ -92,6 +106,8 @@ class FakeAdapter(Adapter):
         return AdapterResult("failed" if self.fail_apply else "applied")
 
     def verify(self, context: ThemeContext) -> AdapterStatus:
+        if self.raise_verify:
+            raise RuntimeError(f"injected {self.adapter_id} verify failure")
         expected = context.values["theme_id"]
         return AdapterStatus(
             "verified" if self.surface[self.adapter_id] == expected else "drifted"
@@ -108,6 +124,8 @@ class FakeAdapter(Adapter):
         if current != record.applied:
             return AdapterResult("conflicted", (self.adapter_id,))
         self.surface[self.adapter_id] = record.before
+        if self.raise_restore:
+            raise RuntimeError(f"injected {self.adapter_id} restore failure")
         return AdapterResult("restored")
 
 
@@ -139,6 +157,10 @@ class ThemeEngineTests(unittest.TestCase):
         *,
         failing: str | None = None,
         raising: str | None = None,
+        restore_raising: str | None = None,
+        verify_raising: str | None = None,
+        preflight_rejecting: str | None = None,
+        captures: dict[str, int] | None = None,
         activity: dict[str, int] | None = None,
         fault_hook: Any = None,
     ) -> ThemeEngine:
@@ -149,6 +171,10 @@ class ThemeEngineTests(unittest.TestCase):
                     self.surface,
                     fail_apply=adapter_id == failing,
                     raise_apply=adapter_id == raising,
+                    raise_restore=adapter_id == restore_raising,
+                    raise_verify=adapter_id == verify_raising,
+                    reject_preflight=adapter_id == preflight_rejecting,
+                    captures=captures,
                     activity=activity,
                 )
             )
@@ -270,6 +296,80 @@ class ThemeEngineTests(unittest.TestCase):
             self.surface,
         )
         self.assertIsNone(self.engine().status().theme_id)
+
+    def test_preflight_rejection_happens_before_capture_or_journal(self) -> None:
+        captures: dict[str, int] = {}
+
+        result = self.engine(preflight_rejecting="two", captures=captures).set("alpha")
+
+        self.assertEqual(3, result.exit_code)
+        self.assertEqual({}, captures)
+        self.assertEqual([], list((self.state_root / "transactions").glob("*")))
+        self.assertEqual([], list((self.state_root / "generations").glob("*")))
+
+    def test_off_exception_after_mutation_restores_active_generation(self) -> None:
+        self.engine().set("alpha")
+
+        result = self.engine(restore_raising="three").off()
+
+        self.assertEqual(4, result.exit_code)
+        self.assertEqual(
+            {"one": "alpha", "two": "alpha", "three": "alpha"},
+            self.surface,
+        )
+        self.assertEqual("ACTIVE", self.engine().status().state)
+        self.assertEqual(
+            [],
+            list((self.state_root / "transactions").glob("engine-*.json")),
+        )
+
+    def test_repair_failure_rolls_prior_adapters_back_to_drift(self) -> None:
+        self.engine().set("alpha")
+        self.surface.update(one="baseline-1", two="baseline-2")
+
+        result = self.engine(failing="two").repair()
+
+        self.assertEqual(4, result.exit_code)
+        self.assertEqual("baseline-1", self.surface["one"])
+        self.assertEqual("baseline-2", self.surface["two"])
+
+    def test_repair_exception_rolls_prior_adapters_back_to_drift(self) -> None:
+        self.engine().set("alpha")
+        self.surface.update(one="baseline-1", two="baseline-2")
+
+        result = self.engine(raising="two").repair()
+
+        self.assertEqual(4, result.exit_code)
+        self.assertEqual("baseline-1", self.surface["one"])
+        self.assertEqual("baseline-2", self.surface["two"])
+
+    def test_rollback_restore_exception_becomes_conflict_result(self) -> None:
+        result = self.engine(failing="two", restore_raising="one").set("alpha")
+
+        self.assertEqual(3, result.exit_code)
+        self.assertEqual("conflicted", result.status)
+        self.assertIn("rollback", result.message)
+
+    def test_status_verify_exception_is_reported_as_conflict(self) -> None:
+        self.engine().set("alpha")
+
+        report = self.engine(verify_raising="one").status()
+
+        self.assertEqual("CONFLICTED", report.state)
+        self.assertIn("verify failure", report.message)
+
+    def test_verified_crash_recovery_verify_exception_is_diagnostic(self) -> None:
+        def crash(phase: str, adapter_id: str | None) -> None:
+            if phase == "after_verify":
+                raise SimulatedCrash()
+
+        with self.assertRaises(SimulatedCrash):
+            self.engine(fault_hook=crash).set("alpha")
+
+        report = self.engine(verify_raising="one").status()
+
+        self.assertEqual("CONFLICTED", report.state)
+        self.assertIn("verify failure", report.message)
 
     def test_incomplete_crash_journal_restores_applied_adapters_on_restart(
         self,

@@ -181,40 +181,113 @@ class ThemeEngine:
                 )
             context = self._context_from_state(state)
             adapters = self._adapters(theme, context, tuple(state["adapters"]))
-            records = self._decode_records(state["records"])
-            repaired: list[str] = []
+            preflight = self._preflight_adapters(adapters, context)
+            if preflight is not None:
+                return preflight
+            repair_ids: list[str] = []
             for adapter_id in state["adapters"]:
                 adapter = adapters[adapter_id]
-                status = adapter.verify(context)
-                if status.status == "verified":
-                    continue
-                result = adapter.apply(context, records[adapter_id])
-                if result.status == "conflicted":
+                try:
+                    status = adapter.verify(context)
+                except Exception as error:
                     return Result(
                         "conflicted",
-                        f"repair preserved external changes on {adapter_id}",
+                        f"repair preflight failed on {adapter_id}: {error}",
                         EXIT_CONFLICT,
-                        result.details,
+                    )
+                if status.status == "verified":
+                    continue
+                repair_ids.append(adapter_id)
+            if not repair_ids:
+                return Result("verified", "active generation verified")
+            try:
+                repair_records = {
+                    adapter_id: adapters[adapter_id].capture(context)
+                    for adapter_id in repair_ids
+                }
+            except Exception as error:
+                return Result(
+                    "conflicted",
+                    f"repair capture failed before mutation: {error}",
+                    EXIT_CONFLICT,
+                )
+            journal = self._create_engine_journal(
+                {
+                    "operation": "repair",
+                    "source_generation_id": current_id,
+                    "theme_id": theme.id,
+                    "adapters": repair_ids,
+                    "applied": [],
+                    "records": self._encode_records(repair_records),
+                    "phase": "REPAIRING",
+                }
+            )
+            repaired: list[str] = []
+            for adapter_id in repair_ids:
+                repaired.append(adapter_id)
+                self._update_engine_journal(journal, applied=repaired)
+                try:
+                    result = adapters[adapter_id].apply(
+                        context, repair_records[adapter_id]
+                    )
+                except Exception as error:
+                    return self._rollback_repair(
+                        journal,
+                        adapters,
+                        context,
+                        repair_records,
+                        repaired,
+                        adapter_id,
+                        details=(str(error),),
+                    )
+                if result.status == "conflicted":
+                    return self._rollback_repair(
+                        journal,
+                        adapters,
+                        context,
+                        repair_records,
+                        repaired,
+                        adapter_id,
+                        conflict=True,
+                        details=result.details,
                     )
                 if result.status not in {"applied", "unchanged"}:
-                    return Result(
-                        "rolled-back",
-                        f"repair failed on {adapter_id}",
-                        EXIT_ADAPTER_FAILURE,
-                        result.details,
+                    return self._rollback_repair(
+                        journal,
+                        adapters,
+                        context,
+                        repair_records,
+                        repaired,
+                        adapter_id,
+                        details=result.details,
                     )
-                if adapter.verify(context).status != "verified":
-                    return Result(
-                        "rolled-back",
-                        f"repair verification failed on {adapter_id}",
-                        EXIT_ADAPTER_FAILURE,
+                try:
+                    verification = adapters[adapter_id].verify(context)
+                except Exception as error:
+                    return self._rollback_repair(
+                        journal,
+                        adapters,
+                        context,
+                        repair_records,
+                        repaired,
+                        adapter_id,
+                        details=(str(error),),
                     )
-                repaired.append(adapter_id)
+                if verification.status != "verified":
+                    return self._rollback_repair(
+                        journal,
+                        adapters,
+                        context,
+                        repair_records,
+                        repaired,
+                        adapter_id,
+                        conflict=verification.status == "conflicted",
+                        details=verification.details,
+                    )
+            journal.unlink()
             return Result(
                 "verified",
-                "active generation verified"
-                if not repaired
-                else "repaired: " + ", ".join(repaired),
+                "repaired: " + ", ".join(repaired),
             )
 
         return self._mutate(operation, allow_legacy_conflict=adopt_current_baseline)
@@ -229,7 +302,10 @@ class ThemeEngine:
             with self._runtime_lock():
                 preparation = self._prepare_locked()
                 if preparation is not None and preparation.exit_code != EXIT_SUCCESS:
-                    return self._status_report(message=preparation.message)
+                    report = self._status_report(message=preparation.message)
+                    if preparation.exit_code == EXIT_CONFLICT:
+                        return replace(report, state="CONFLICTED")
+                    return report
                 return self._status_report()
         except StateConflict as error:
             return self._status_report(message=str(error))
@@ -309,6 +385,10 @@ class ThemeEngine:
             values=values,
         )
         adapters = self._adapters(theme, context, adapter_ids)
+        preflight = self._preflight_adapters(adapters, context)
+        if preflight is not None:
+            shutil.rmtree(candidate)
+            return preflight
         apply_records = {
             adapter_id: adapters[adapter_id].capture(context)
             for adapter_id in adapter_ids
@@ -473,18 +553,51 @@ class ThemeEngine:
         )
         restored: list[str] = []
         for adapter_id in reversed(adapter_ids):
-            result = adapters[adapter_id].restore(context, records[adapter_id])
-            if result.status == "conflicted":
-                self._reapply_restored(adapters, context, records, reversed(restored))
+            attempted = [*restored, adapter_id]
+            self._update_engine_journal(journal, applied=attempted)
+            try:
+                result = adapters[adapter_id].restore(context, records[adapter_id])
+            except Exception as error:
+                rollback_conflicts = self._reapply_restored(
+                    adapters, context, records, reversed(attempted)
+                )
+                if rollback_conflicts:
+                    return Result(
+                        "conflicted",
+                        "off failure could not restore the active generation",
+                        EXIT_CONFLICT,
+                        tuple(rollback_conflicts),
+                    )
                 journal.unlink()
+                return Result(
+                    "rolled-back",
+                    f"off failure on {adapter_id} was rolled back",
+                    EXIT_ADAPTER_FAILURE,
+                    (str(error),),
+                )
+            if result.status == "conflicted":
+                rollback_conflicts = self._reapply_restored(
+                    adapters, context, records, reversed(restored)
+                )
+                if not rollback_conflicts:
+                    journal.unlink()
                 return Result(
                     "conflicted",
                     f"off preserved external changes on {adapter_id}",
                     EXIT_CONFLICT,
-                    result.details,
+                    result.details + tuple(rollback_conflicts),
                 )
             if result.status not in {"restored", "unchanged"}:
-                self._reapply_restored(adapters, context, records, reversed(restored))
+                rollback_conflicts = self._reapply_restored(
+                    adapters, context, records, reversed(attempted)
+                )
+                if rollback_conflicts:
+                    return Result(
+                        "conflicted",
+                        "off failure could not restore the active generation",
+                        EXIT_CONFLICT,
+                        tuple(rollback_conflicts),
+                    )
                 journal.unlink()
                 return Result(
                     "rolled-back",
@@ -494,7 +607,6 @@ class ThemeEngine:
                 )
             restored.append(adapter_id)
             self._update_engine_journal(journal, applied=restored)
-
         disabled_id = self._generation_id()
         self.store.create_generation(
             disabled_id,
@@ -528,16 +640,15 @@ class ThemeEngine:
         conflict: bool,
         details: tuple[str, ...],
     ) -> Result:
-        rollback_conflicts: list[str] = []
-        for adapter_id in reversed(applied):
-            restored = adapters[adapter_id].restore(context, records[adapter_id])
-            if restored.status == "conflicted":
-                rollback_conflicts.extend(restored.details or (adapter_id,))
-        journal.unlink()
+        rollback_conflicts = self._restore_applied(
+            adapters, context, records, reversed(applied)
+        )
+        if not rollback_conflicts:
+            journal.unlink()
         if rollback_conflicts:
             return Result(
                 "conflicted",
-                "adapter failure could not be rolled back safely",
+                "adapter rollback failed to restore the prior state safely",
                 EXIT_CONFLICT,
                 tuple(rollback_conflicts),
             )
@@ -554,6 +665,88 @@ class ThemeEngine:
             EXIT_ADAPTER_FAILURE,
             details,
         )
+
+    def _rollback_repair(
+        self,
+        journal: Path,
+        adapters: Mapping[str, Adapter],
+        context: ThemeContext,
+        records: Mapping[str, list[ResourceRecord]],
+        applied: list[str],
+        failed_adapter: str,
+        *,
+        conflict: bool = False,
+        details: tuple[str, ...] = (),
+    ) -> Result:
+        rollback_conflicts = self._restore_applied(
+            adapters, context, records, reversed(applied)
+        )
+        if rollback_conflicts:
+            return Result(
+                "conflicted",
+                "repair failure could not restore pre-repair state",
+                EXIT_CONFLICT,
+                tuple(rollback_conflicts),
+            )
+        journal.unlink()
+        if conflict:
+            return Result(
+                "conflicted",
+                f"repair preserved external changes on {failed_adapter}",
+                EXIT_CONFLICT,
+                details,
+            )
+        return Result(
+            "rolled-back",
+            f"repair failure on {failed_adapter} was rolled back",
+            EXIT_ADAPTER_FAILURE,
+            details,
+        )
+
+    @staticmethod
+    def _preflight_adapters(
+        adapters: Mapping[str, Adapter], context: ThemeContext
+    ) -> Result | None:
+        for adapter_id, adapter in adapters.items():
+            preflight = getattr(adapter, "preflight", None)
+            if preflight is None:
+                continue
+            try:
+                status = preflight(context)
+            except Exception as error:
+                return Result(
+                    "conflicted",
+                    f"adapter preflight failed on {adapter_id}: {error}",
+                    EXIT_CONFLICT,
+                )
+            if status.status not in {"ready", "supported", "verified"}:
+                return Result(
+                    "conflicted",
+                    f"adapter preflight rejected {adapter_id}: {status.status}",
+                    EXIT_CONFLICT,
+                    getattr(status, "details", ()),
+                )
+        return None
+
+    @staticmethod
+    def _restore_applied(
+        adapters: Mapping[str, Adapter],
+        context: ThemeContext,
+        records: Mapping[str, list[ResourceRecord]],
+        adapter_ids: Iterator[str],
+    ) -> list[str]:
+        conflicts: list[str] = []
+        for adapter_id in adapter_ids:
+            try:
+                result = adapters[adapter_id].restore(context, records[adapter_id])
+            except Exception as error:
+                conflicts.append(f"{adapter_id}: {error}")
+                continue
+            if result.status == "conflicted":
+                conflicts.extend(result.details or (adapter_id,))
+            elif result.status not in {"restored", "unchanged"}:
+                conflicts.extend(result.details or (adapter_id,))
+        return conflicts
 
     def _recover_engine_journal(self) -> Result | None:
         journals = sorted(
@@ -612,10 +805,18 @@ class ThemeEngine:
             if adapter_id in adapters
         ]
         if record.get("phase") == "VERIFIED" and applied == list(adapter_ids):
-            if all(
-                adapters[adapter_id].verify(context).status == "verified"
-                for adapter_id in adapter_ids
-            ):
+            try:
+                verified = all(
+                    adapters[adapter_id].verify(context).status == "verified"
+                    for adapter_id in adapter_ids
+                )
+            except Exception as error:
+                return Result(
+                    "conflicted",
+                    f"interrupted activation verify failure: {error}",
+                    EXIT_CONFLICT,
+                )
+            if verified:
                 state["state"] = "ACTIVE"
                 state["records"] = self._encode_records(self._with_baseline(records))
                 state["surfaces"] = {
@@ -631,11 +832,7 @@ class ThemeEngine:
                     "verified",
                     f"completed interrupted activation of {theme.id}",
                 )
-        conflicts: list[str] = []
-        for adapter_id in reversed(applied):
-            result = adapters[adapter_id].restore(context, records[adapter_id])
-            if result.status == "conflicted":
-                conflicts.extend(result.details or (adapter_id,))
+        conflicts = self._restore_applied(adapters, context, records, reversed(applied))
         if conflicts:
             return Result(
                 "conflicted",
@@ -691,7 +888,11 @@ class ThemeEngine:
     ) -> list[str]:
         conflicts: list[str] = []
         for adapter_id in adapter_ids:
-            result = adapters[adapter_id].apply(context, records[adapter_id])
+            try:
+                result = adapters[adapter_id].apply(context, records[adapter_id])
+            except Exception as error:
+                conflicts.append(f"{adapter_id}: {error}")
+                continue
             if result.status not in {"applied", "unchanged"}:
                 conflicts.extend(result.details or (adapter_id,))
         return conflicts
@@ -736,10 +937,16 @@ class ThemeEngine:
                 context,
                 tuple(generation.get("adapters", ())),
             )
-            surfaces = {
-                adapter_id: adapters[adapter_id].verify(context).status
-                for adapter_id in generation.get("adapters", ())
-            }
+            surfaces = {}
+            verify_errors: list[str] = []
+            for adapter_id in generation.get("adapters", ()):
+                try:
+                    surfaces[adapter_id] = adapters[adapter_id].verify(context).status
+                except Exception as error:
+                    surfaces[adapter_id] = "conflicted"
+                    verify_errors.append(f"{adapter_id}: {error}")
+            if verify_errors and not message:
+                message = "adapter verify failure: " + "; ".join(verify_errors)
             if any(value == "conflicted" for value in surfaces.values()):
                 state = "CONFLICTED"
         return StatusReport(
