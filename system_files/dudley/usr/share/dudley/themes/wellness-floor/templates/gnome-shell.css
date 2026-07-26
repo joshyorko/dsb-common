@@ -1,0 +1,153 @@
+/* Dudley Wellness Floor — original GNOME Shell surface generated from colors.toml. */
+
+stage {
+  color: {{ foreground }};
+  font-family: Cantarell, sans-serif;
+}
+
+#panel {
+  background-color: {{ background_deep }};
+  color: {{ foreground_bright }};
+  border-bottom: 1px solid {{ border_inactive }};
+  height: 2.25em;
+}
+
+#panel .panel-button {
+  color: {{ foreground }};
+  border-radius: 8px;
+}
+
+#panel .panel-button:hover,
+#panel .panel-button:active,
+#panel .panel-button:checked {
+  color: {{ foreground_bright }};
+  background-color: {{ surface_alt }};
+}
+
+#overview {
+  background-color: {{ background }};
+  color: {{ foreground }};
+}
+
+.search-entry,
+.app-folder-dialog,
+.quick-settings,
+.quick-settings-grid,
+.quick-toggle-menu,
+.calendar,
+.message-list,
+.datemenu-popover {
+  color: {{ foreground }};
+  background-color: {{ surface }};
+  border: 1px solid {{ border_inactive }};
+  border-radius: 14px;
+}
+
+.quick-toggle,
+.quick-menu-toggle {
+  color: {{ foreground }};
+  background-color: {{ surface_alt }};
+  border-radius: 12px;
+}
+
+.quick-toggle:checked,
+.quick-menu-toggle:checked {
+  color: {{ selection_foreground }};
+  background-color: {{ accent }};
+}
+
+.notification-banner,
+.message {
+  color: {{ foreground }};
+  background-color: {{ surface }};
+  border: 1px solid {{ border_inactive }};
+  border-radius: 12px;
+}
+
+.notification-banner:focus,
+.notification-banner:hover,
+.message:focus,
+.message:hover {
+  border-color: {{ accent_soft }};
+  background-color: {{ surface_alt }};
+}
+
+.modal-dialog,
+.prompt-dialog,
+.polkit-dialog,
+.run-dialog {
+  color: {{ foreground }};
+  background-color: {{ background_deep }};
+  border: 1px solid {{ border_active }};
+  border-radius: 16px;
+}
+
+.modal-dialog .button,
+.prompt-dialog .button {
+  color: {{ foreground_bright }};
+  background-color: {{ surface_alt }};
+  border-radius: 10px;
+}
+
+.modal-dialog .button:focus,
+.modal-dialog .button:hover,
+.prompt-dialog .button:focus,
+.prompt-dialog .button:hover {
+  color: {{ selection_foreground }};
+  background-color: {{ accent }};
+}
+
+.osd-window {
+  color: {{ foreground_bright }};
+  background-color: {{ background_deep }};
+  border: 1px solid {{ border_active }};
+  border-radius: 14px;
+}
+
+.workspace-indicator,
+.workspace-indicator .workspace {
+  color: {{ foreground }};
+  background-color: {{ surface }};
+  border: 1px solid {{ border_inactive }};
+  border-radius: 9px;
+}
+
+.workspace-indicator .workspace.active {
+  background-color: {{ accent }};
+  border-color: {{ foreground_bright }};
+}
+
+.screen-shield,
+.unlock-dialog,
+.login-dialog {
+  color: {{ foreground_bright }};
+  background-color: {{ background_deep }};
+}
+
+.screen-shield-clock,
+.unlock-dialog-clock {
+  color: {{ foreground_bright }};
+}
+
+.screen-shield-notifications-container,
+.unlock-dialog-notifications-container {
+  color: {{ foreground }};
+  background-color: {{ surface }};
+  border: 1px solid {{ border_inactive }};
+  border-radius: 14px;
+}
+
+.switcher-list,
+.window-picker,
+.dash-background {
+  color: {{ foreground }};
+  background-color: {{ surface }};
+  border: 1px solid {{ border_inactive }};
+  border-radius: 14px;
+}
+
+.app-well-app-running-dot,
+.workspace-thumbnail-indicator {
+  background-color: {{ accent_strong }};
+  border-color: {{ foreground_bright }};
+}

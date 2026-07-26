@@ -1,0 +1,117 @@
+/* Dudley Wellness Floor — original GTK 3 surface generated from colors.toml. */
+
+@define-color theme_bg_color {{ background }};
+@define-color theme_fg_color {{ foreground }};
+@define-color theme_base_color {{ background_deep }};
+@define-color theme_text_color {{ foreground }};
+@define-color theme_selected_bg_color {{ selection_background }};
+@define-color theme_selected_fg_color {{ selection_foreground }};
+@define-color insensitive_bg_color {{ surface }};
+@define-color insensitive_fg_color {{ muted }};
+@define-color borders {{ border_inactive }};
+
+* {
+  -gtk-outline-radius: 6px;
+  color: {{ foreground }};
+  border-color: {{ border_inactive }};
+}
+
+window,
+dialog,
+popover,
+menu {
+  color: {{ foreground }};
+  background-color: {{ background }};
+}
+
+headerbar,
+titlebar,
+menubar,
+toolbar,
+.sidebar {
+  color: {{ foreground_bright }};
+  background-color: {{ background_deep }};
+  border-color: {{ border_inactive }};
+}
+
+button,
+modelbutton {
+  color: {{ foreground }};
+  background-color: {{ surface_alt }};
+  border: 1px solid {{ border_inactive }};
+  border-radius: 7px;
+  padding: 5px 10px;
+}
+
+button:hover,
+modelbutton:hover {
+  color: {{ foreground_bright }};
+  border-color: {{ accent_soft }};
+}
+
+button:checked,
+button:active,
+button.suggested-action {
+  color: {{ selection_foreground }};
+  background-color: {{ accent }};
+  border-color: {{ accent_strong }};
+}
+
+entry,
+textview,
+treeview,
+list,
+listbox,
+spinbutton {
+  color: {{ foreground }};
+  background-color: {{ background_deep }};
+  border: 1px solid {{ border_inactive }};
+  border-radius: 6px;
+}
+
+entry:focus,
+textview:focus,
+treeview:focus,
+spinbutton:focus {
+  border-color: {{ accent }};
+  box-shadow: inset 0 0 0 1px {{ accent_soft }};
+}
+
+selection,
+*:selected {
+  color: {{ selection_foreground }};
+  background-color: {{ selection_background }};
+}
+
+tooltip {
+  color: {{ foreground_bright }};
+  background-color: {{ background_deep }};
+  border: 1px solid {{ border_active }};
+  border-radius: 6px;
+}
+
+scrollbar slider {
+  background-color: {{ surface_alt }};
+  border-radius: 8px;
+  min-width: 8px;
+  min-height: 8px;
+}
+
+scrollbar slider:hover,
+scrollbar slider:active {
+  background-color: {{ accent_soft }};
+}
+
+progressbar progress,
+levelbar block.filled,
+scale highlight {
+  background-color: {{ accent }};
+}
+
+separator {
+  background-color: {{ border_inactive }};
+}
+
+:disabled {
+  color: {{ muted }};
+}

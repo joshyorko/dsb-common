@@ -47,6 +47,24 @@
       "modification_status": "project-work",
       "required_attribution": "Dudley project"
     },
+    "templates/gnome-shell.css": {
+      "source": "Original Dudley Wellness Floor palette-generated GNOME Shell CSS",
+      "author": "Dudley project contributors",
+      "license": "MIT",
+      "original_sha256": "abf12a7b2d7f997b7faa38083c81d8dd44ee30abaeb9a20a705772e37313ee1c",
+      "shipped_sha256": "abf12a7b2d7f997b7faa38083c81d8dd44ee30abaeb9a20a705772e37313ee1c",
+      "modification_status": "project-work",
+      "required_attribution": "Dudley project"
+    },
+    "templates/gtk-3.0.css": {
+      "source": "Original Dudley Wellness Floor palette-generated GTK 3 CSS",
+      "author": "Dudley project contributors",
+      "license": "MIT",
+      "original_sha256": "4a6c40cb05f4374319db561c77c7a1349e4c626e2d59e2d4a4a889c5bf88ab8f",
+      "shipped_sha256": "4a6c40cb05f4374319db561c77c7a1349e4c626e2d59e2d4a4a889c5bf88ab8f",
+      "modification_status": "project-work",
+      "required_attribution": "Dudley project"
+    },
     "terminal/ghostty.theme": {
       "source": "Dudley Wellness Floor project configuration",
       "author": "Dudley project contributors",
