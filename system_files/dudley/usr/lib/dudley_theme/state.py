@@ -57,20 +57,19 @@ class StateStore:
         """Durably switch current and previous references to a generation."""
         self._require_writable()
         self._generation_path(generation_id)
-        previous_id = self.current_id()
-        self._atomic_json(
-            self.transactions_path / f"{generation_id}.json",
-            {
-                "generation_id": generation_id,
-                "previous_generation_id": previous_id,
-                "state": "COMMITTED",
-            },
-        )
-        if previous_id is None:
-            self._remove_reference(self.previous_path)
-        else:
-            self._replace_reference(self.previous_path, previous_id)
-        self._replace_reference(self.current_path, generation_id)
+        previous_id = self.recover_pointer()
+        sequence = self._next_transaction_sequence()
+        journal = self.transactions_path / f"{sequence:020d}-{generation_id}.json"
+        record = {
+            "generation_id": generation_id,
+            "previous_generation_id": previous_id,
+            "sequence": sequence,
+            "state": "PREPARED",
+        }
+        self._atomic_json(journal, record)
+        self._replace_pointer_pair(generation_id, previous_id)
+        record["state"] = "COMMITTED"
+        self._atomic_json(journal, record)
 
     def current_id(self) -> str | None:
         return self._reference_id(self.current_path)
@@ -79,32 +78,21 @@ class StateStore:
         return self._reference_id(self.previous_path)
 
     def recover_pointer(self) -> str | None:
-        """Repair current only if the committed journal has one candidate."""
+        """Repair references from the newest durable transaction intent."""
         current_id = self.current_id()
-        if current_id is not None:
-            return current_id
         if self.read_only or not self.transactions_path.is_dir():
-            return None
+            return current_id
 
-        candidates: set[str] = set()
-        for journal in self.transactions_path.glob("*.json"):
-            try:
-                record = json.loads(journal.read_text(encoding="utf-8"))
-                generation_id = record["generation_id"]
-            except (json.JSONDecodeError, KeyError, OSError, TypeError):
-                continue
-            if record.get("state") != "COMMITTED" or not isinstance(generation_id, str):
-                continue
-            try:
-                self._generation_path(generation_id)
-            except StateConflict:
-                continue
-            candidates.add(generation_id)
-
-        if len(candidates) != 1:
-            return None
-        generation_id = candidates.pop()
-        self._replace_reference(self.current_path, generation_id)
+        transaction = self._latest_transaction()
+        if transaction is None:
+            return current_id
+        journal, record = transaction
+        generation_id = record["generation_id"]
+        previous_id = record["previous_generation_id"]
+        self._replace_pointer_pair(generation_id, previous_id)
+        if record["state"] == "PREPARED":
+            record["state"] = "COMMITTED"
+            self._atomic_json(journal, record)
         return generation_id
 
     def _read_preferences(self) -> dict[str, Any]:
@@ -120,6 +108,13 @@ class StateStore:
         candidate = self._validate_generation_id(generation_id)
         if not candidate.is_dir():
             raise StateConflict(f"unknown generation: {generation_id}")
+        try:
+            resolved = candidate.resolve(strict=True)
+            generations = self.generations_path.resolve(strict=True)
+        except OSError as error:
+            raise StateConflict(f"unreadable generation: {generation_id}") from error
+        if resolved.parent != generations:
+            raise StateConflict(f"generation escapes store: {generation_id!r}")
         return candidate
 
     def _validate_generation_id(self, generation_id: str) -> Path:
@@ -155,6 +150,49 @@ class StateStore:
         finally:
             if temporary.is_symlink():
                 temporary.unlink()
+
+    def _replace_pointer_pair(
+        self, current_id: str, previous_id: str | None
+    ) -> None:
+        """Install a journal-authorized pointer pair and synchronize each step."""
+        if previous_id is None:
+            self._remove_reference(self.previous_path)
+        else:
+            self._replace_reference(self.previous_path, previous_id)
+        self._replace_reference(self.current_path, current_id)
+
+    def _next_transaction_sequence(self) -> int:
+        transaction = self._latest_transaction()
+        if transaction is None:
+            return 1
+        return transaction[1]["sequence"] + 1
+
+    def _latest_transaction(self) -> tuple[Path, dict[str, Any]] | None:
+        latest: tuple[Path, dict[str, Any]] | None = None
+        for journal in self.transactions_path.glob("*.json"):
+            try:
+                record = json.loads(journal.read_text(encoding="utf-8"))
+                generation_id = record["generation_id"]
+                previous_id = record["previous_generation_id"]
+                sequence = record["sequence"]
+            except (json.JSONDecodeError, KeyError, OSError, TypeError):
+                continue
+            if (
+                record.get("state") not in {"PREPARED", "COMMITTED"}
+                or not isinstance(generation_id, str)
+                or not isinstance(previous_id, str | type(None))
+                or not isinstance(sequence, int)
+            ):
+                continue
+            try:
+                self._generation_path(generation_id)
+                if previous_id is not None:
+                    self._generation_path(previous_id)
+            except StateConflict:
+                continue
+            if latest is None or sequence > latest[1]["sequence"]:
+                latest = (journal, record)
+        return latest
 
     def _remove_reference(self, reference: Path) -> None:
         if reference.exists() or reference.is_symlink():
