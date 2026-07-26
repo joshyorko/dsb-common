@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -34,12 +34,17 @@ class JsoncResource:
     value: Any = None
     raw_value: str | None = None
     missing_parents: tuple[tuple[str, ...], ...] = ()
+    file_existed: bool = True
+    preceding_comma_existed: bool = False
+    compact_parent: bool = False
 
     @property
     def fingerprint(self) -> str:
+        file_state = "file" if self.file_existed else "absent-file"
         if not self.existed:
-            return "absent"
-        return json.dumps(self.value, sort_keys=True, separators=(",", ":"))
+            return f"{file_state}:absent"
+        value = json.dumps(self.value, sort_keys=True, separators=(",", ":"))
+        return f"{file_state}:{value}"
 
 
 @dataclass(frozen=True)
@@ -219,14 +224,19 @@ def _locate(
 
 def capture_jsonc_value(path: Path, key_path: tuple[str, ...]) -> JsoncResource:
     path = Path(path)
-    text = path.read_text(encoding="utf-8")
+    file_existed = path.is_file()
+    text = path.read_text(encoding="utf-8") if file_existed else "{}\n"
     member, missing_parents = _locate(text, key_path)
     if member is None:
+        preceding_comma_existed, compact_parent = _insertion_context(text, key_path)
         return JsoncResource(
             path=path,
             key_path=key_path,
             existed=False,
             missing_parents=missing_parents,
+            file_existed=file_existed,
+            preceding_comma_existed=preceding_comma_existed,
+            compact_parent=compact_parent,
         )
     raw = text[member.value_start : member.value_end]
     return JsoncResource(
@@ -235,7 +245,37 @@ def capture_jsonc_value(path: Path, key_path: tuple[str, ...]) -> JsoncResource:
         existed=True,
         value=_decode_value(raw),
         raw_value=raw,
+        file_existed=file_existed,
     )
+
+
+def _insertion_context(text: str, key_path: tuple[str, ...]) -> tuple[bool, bool]:
+    object_start = _root_start(text)
+    for key in key_path[:-1]:
+        close, members = _members(text, object_start)
+        member = members.get(key)
+        if member is None or text[member.value_start] != "{":
+            return _object_insertion_context(text, close, members)
+        object_start = member.value_start
+    close, members = _members(text, object_start)
+    if key_path[-1] in members or not members:
+        return _object_insertion_context(text, close, members)
+    previous = max(members.values(), key=lambda member: member.value_end)
+    _, compact = _object_insertion_context(text, close, members)
+    return previous.comma_start is not None, compact
+
+
+def _object_insertion_context(
+    text: str, close: int, members: Mapping[str, _Member]
+) -> tuple[bool, bool]:
+    preceding_comma = (
+        bool(members)
+        and max(members.values(), key=lambda member: member.value_end).comma_start
+        is not None
+    )
+    close_line_start = text.rfind("\n", 0, close) + 1
+    compact = bool(text[close_line_start:close].strip())
+    return preceding_comma, compact
 
 
 def _formatted(value: Any, continuation_indent: str) -> str:
@@ -291,7 +331,15 @@ def _set_path_raw(
     return _set_path_raw(text, key_path[1:], raw_value, member.value_start)
 
 
-def _delete_path(text: str, key_path: tuple[str, ...], start: int | None = None) -> str:
+def _delete_path(
+    text: str,
+    key_path: tuple[str, ...],
+    start: int | None = None,
+    *,
+    preserve_preceding_comma: bool = False,
+    remove_inserted_line: bool = False,
+    compact_parent: bool = False,
+) -> str:
     object_start = _root_start(text) if start is None else start
     _, members = _members(text, object_start)
     member = members.get(key_path[0])
@@ -300,20 +348,34 @@ def _delete_path(text: str, key_path: tuple[str, ...], start: int | None = None)
     if len(key_path) > 1:
         if text[member.value_start] != "{":
             return text
-        return _delete_path(text, key_path[1:], member.value_start)
-    if member.comma_end is not None:
-        return text[: member.key_start] + text[member.comma_end :]
+        return _delete_path(
+            text,
+            key_path[1:],
+            member.value_start,
+            preserve_preceding_comma=preserve_preceding_comma,
+            remove_inserted_line=remove_inserted_line,
+            compact_parent=compact_parent,
+        )
+    start_remove = member.key_start
+    end_remove = member.comma_end or member.value_end
+    if remove_inserted_line:
+        start_remove = text.rfind("\n", 0, member.key_start) + 1
+        if compact_parent and start_remove > 0:
+            start_remove -= 1
+        line_end = text.find("\n", end_remove)
+        if line_end >= 0 and not text[end_remove:line_end].strip():
+            end_remove = line_end + 1
     previous = [
         candidate
         for candidate in members.values()
         if candidate.value_end < member.key_start
     ]
-    start_remove = member.key_start
-    if previous:
+    result = text[:start_remove] + text[end_remove:]
+    if previous and not preserve_preceding_comma:
         prior = max(previous, key=lambda candidate: candidate.value_end)
         if prior.comma_start is not None:
-            start_remove = prior.comma_start
-    return text[:start_remove] + text[member.value_end :]
+            return result[: prior.comma_start] + result[prior.comma_end :]
+    return result
 
 
 def _object_is_empty(text: str, key_path: tuple[str, ...]) -> bool:
@@ -324,9 +386,14 @@ def _object_is_empty(text: str, key_path: tuple[str, ...]) -> bool:
     return not members
 
 
+def _root_is_empty(text: str) -> bool:
+    _, members = _members(text, _root_start(text))
+    return not members
+
+
 def _write_jsonc(path: Path, text: str) -> None:
     captured = capture_file(path)
-    if captured.state != "file":
+    if captured.state not in {"absent", "file"}:
         raise ValueError(f"JSONC resource must be a regular file: {path}")
     write_managed_file(
         path,
@@ -342,7 +409,7 @@ def write_jsonc_value(record: JsoncResource, value: Any) -> JsoncResource:
             f"JSONC resource changed after capture: {record.path} "
             f"{'.'.join(record.key_path)}"
         )
-    text = record.path.read_text(encoding="utf-8")
+    text = record.path.read_text(encoding="utf-8") if record.path.is_file() else "{}\n"
     member, _ = _locate(text, record.key_path)
     value_start = member.value_start if member is not None else _root_start(text)
     line_start = text.rfind("\n", 0, value_start) + 1
@@ -370,10 +437,25 @@ def restore_jsonc_value(
             raise ValueError("captured JSONC value has no source token")
         text = _set_path_raw(text, record.key_path, record.raw_value)
     else:
-        text = _delete_path(text, record.key_path)
+        text = _delete_path(
+            text,
+            record.key_path,
+            preserve_preceding_comma=record.preceding_comma_existed,
+            remove_inserted_line=True,
+            compact_parent=record.compact_parent,
+        )
         for parent in reversed(record.missing_parents):
             if _object_is_empty(text, parent):
-                text = _delete_path(text, parent)
+                text = _delete_path(
+                    text,
+                    parent,
+                    preserve_preceding_comma=record.preceding_comma_existed,
+                    remove_inserted_line=True,
+                    compact_parent=record.compact_parent,
+                )
+        if not record.file_existed and _root_is_empty(text):
+            record.path.unlink()
+            return AdapterResult("restored")
     _write_jsonc(record.path, text)
     return AdapterResult("restored")
 
@@ -556,8 +638,6 @@ class VSCodeAdapter(Adapter):
         records: list[ResourceRecord] = []
         for relative_path in self.settings_paths:
             path = context.home / relative_path
-            if not path.is_file():
-                continue
             for key_path, value in changes:
                 before = capture_jsonc_value(path, key_path)
                 applied = JsoncResource(
@@ -591,10 +671,16 @@ class VSCodeAdapter(Adapter):
         ]
         if conflicts:
             return AdapterResult("conflicted", tuple(conflicts))
+        created_paths: set[Path] = set()
         for record in records:
             current = capture_jsonc_value(record.before.path, record.before.key_path)
             if current.fingerprint != record.applied.fingerprint:
-                write_jsonc_value(record.before, record.applied.value)
+                before = record.before
+                if not before.file_existed and before.path in created_paths:
+                    before = replace(before, file_existed=True)
+                write_jsonc_value(before, record.applied.value)
+                if not record.before.file_existed:
+                    created_paths.add(record.before.path)
         return AdapterResult("applied")
 
     def verify(self, context: ThemeContext) -> AdapterStatus:

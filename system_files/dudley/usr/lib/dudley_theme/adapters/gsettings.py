@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Mapping, Protocol
 
 from dudley_theme.model import ResourceRecord
@@ -120,23 +120,28 @@ class GSettingsAdapter(Adapter):
     ) -> None:
         self.settings = dict(settings)
         self.backend = backend or CommandSettingsBackend()
+        self._applied: dict[tuple[str, str], SettingResource] = {}
 
     def capture(self, context: ThemeContext) -> list[ResourceRecord]:
         del context
         records: list[ResourceRecord] = []
         for (schema, key), value in self.settings.items():
             before = capture_setting(self.backend, schema, key)
+            applied = self._applied.get(
+                (schema, key),
+                SettingResource(
+                    schema=schema,
+                    key=key,
+                    value=value,
+                    unset=False,
+                ),
+            )
             records.append(
                 ResourceRecord(
                     adapter="gsettings",
                     resource=f"{schema} {key}",
                     before=before,
-                    applied=SettingResource(
-                        schema=schema,
-                        key=key,
-                        value=value,
-                        unset=False,
-                    ),
+                    applied=applied,
                 )
             )
         return records
@@ -153,7 +158,7 @@ class GSettingsAdapter(Adapter):
         ]
         if conflicts:
             return AdapterResult("conflicted", tuple(conflicts))
-        for record in records:
+        for index, record in enumerate(records):
             current = capture_setting(
                 self.backend, record.before.schema, record.before.key
             )
@@ -163,6 +168,11 @@ class GSettingsAdapter(Adapter):
                     record.applied.key,
                     record.applied.value,
                 )
+                current = capture_setting(
+                    self.backend, record.before.schema, record.before.key
+                )
+            records[index] = replace(record, applied=current)
+            self._applied[(current.schema, current.key)] = current
         return AdapterResult("applied")
 
     def verify(self, context: ThemeContext) -> AdapterStatus:

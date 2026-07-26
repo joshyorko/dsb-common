@@ -38,6 +38,12 @@ class MemorySettingsBackend:
         self.values.pop((schema, key), None)
 
 
+class CanonicalizingSettingsBackend(MemorySettingsBackend):
+    def write(self, schema: str, key: str, value: str) -> None:
+        canonical = "[]" if value == "@as []" else value
+        super().write(schema, key, canonical)
+
+
 def load_gsettings_api() -> tuple[Any, ...]:
     try:
         from dudley_theme.adapters.gsettings import (
@@ -199,6 +205,23 @@ class SettingResourceTests(unittest.TestCase):
         self.assertEqual(2, len(records))
         self.assertEqual({}, backend.values)
 
+    def test_gsettings_adapter_records_canonical_post_write_value(self) -> None:
+        GSettingsAdapter, _, _, _ = load_gsettings_api()
+        backend = CanonicalizingSettingsBackend()
+        adapter = GSettingsAdapter(
+            {("org.example.theme", "palette"): "@as []"},
+            backend=backend,
+        )
+        context = ThemeContext(home=Path("/unused"))
+        records = adapter.capture(context)
+
+        adapter.apply(context, records)
+
+        self.assertEqual("[]", records[0].applied.value)
+        self.assertEqual("verified", adapter.verify(context).status)
+        self.assertEqual("restored", adapter.restore(context, records).status)
+        self.assertEqual({}, backend.values)
+
 
 class JsoncResourceTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -287,6 +310,32 @@ class JsoncResourceTests(unittest.TestCase):
             self.fail(f"valid JSONC value was rejected: {error}")
 
         self.assertEqual([80, 100], record.value)
+
+    def test_restore_new_last_member_preserves_original_bytes(self) -> None:
+        (
+            _,
+            _,
+            _,
+            _,
+            _,
+            capture_jsonc_value,
+            restore_jsonc_value,
+            write_jsonc_value,
+        ) = load_app_api()
+        target = self.root / "settings.json"
+        original = b"""{
+  "editor.fontSize": 15,
+  // Preserve this trailing-comma comment exactly.
+}
+"""
+        target.write_bytes(original)
+        record = capture_jsonc_value(target, ("workbench.colorTheme",))
+
+        applied = write_jsonc_value(record, "Dudley Wellness Floor")
+        result = restore_jsonc_value(record, expected=applied)
+
+        self.assertEqual("restored", result.status)
+        self.assertEqual(original, target.read_bytes())
 
 
 class CuratedAppAdapterTests(unittest.TestCase):
@@ -390,6 +439,47 @@ class CuratedAppAdapterTests(unittest.TestCase):
             self.assertIn('"editor.fontSize": 15', text)
             self.assertIn('"workbench.colorTheme": "Dudley Wellness Floor"', text)
             self.assertIn('"editor.background": "#16242d"', text)
+
+    def test_vscode_adapter_creates_and_restores_absent_settings_files(self) -> None:
+        *_, VSCodeAdapter, _, _, _ = load_app_api()
+        paths = [
+            self.home / ".config/Code/User/settings.json",
+            self.home / ".config/Code - Insiders/User/settings.json",
+        ]
+        context = ThemeContext(
+            home=self.home,
+            values={"vscode": {"workbench.colorTheme": "Dudley Wellness Floor"}},
+        )
+        adapter = VSCodeAdapter()
+        records = adapter.capture(context)
+
+        applied = adapter.apply(context, records)
+        restored = adapter.restore(context, records)
+
+        self.assertEqual("applied", applied.status)
+        self.assertEqual("restored", restored.status)
+        self.assertEqual(2, len(records))
+        self.assertTrue(all(not record.before.file_existed for record in records))
+        for path in paths:
+            self.assertFalse(path.exists())
+
+    def test_vscode_adapter_conflicts_if_absent_settings_file_appears(self) -> None:
+        *_, VSCodeAdapter, _, _, _ = load_app_api()
+        context = ThemeContext(
+            home=self.home,
+            values={"vscode": {"workbench.colorTheme": "Dudley Wellness Floor"}},
+        )
+        adapter = VSCodeAdapter()
+        records = adapter.capture(context)
+        stable = self.home / ".config/Code/User/settings.json"
+        stable.parent.mkdir(parents=True)
+        original = b'{\n  "editor.fontSize": 16,\n}\n'
+        stable.write_bytes(original)
+
+        result = adapter.apply(context, records)
+
+        self.assertEqual("conflicted", result.status)
+        self.assertEqual(original, stable.read_bytes())
 
 
 if __name__ == "__main__":
