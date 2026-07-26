@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import tempfile
+from contextlib import contextmanager
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -25,6 +28,7 @@ class StateStore:
         self.baseline_path = root / "baseline"
         self.generations_path = root / "generations"
         self.transactions_path = root / "transactions"
+        self.transaction_lock_path = root / ".transactions.lock"
         self.current_path = root / "current"
         self.previous_path = root / "previous"
         self.root.mkdir(parents=True, exist_ok=True)
@@ -56,20 +60,21 @@ class StateStore:
     def commit_generation(self, generation_id: str) -> None:
         """Durably switch current and previous references to a generation."""
         self._require_writable()
-        self._generation_path(generation_id)
-        previous_id = self.recover_pointer()
-        sequence = self._next_transaction_sequence()
-        journal = self.transactions_path / f"{sequence:020d}-{generation_id}.json"
-        record = {
-            "generation_id": generation_id,
-            "previous_generation_id": previous_id,
-            "sequence": sequence,
-            "state": "PREPARED",
-        }
-        self._atomic_json(journal, record)
-        self._replace_pointer_pair(generation_id, previous_id)
-        record["state"] = "COMMITTED"
-        self._atomic_json(journal, record)
+        with self._transaction_lock():
+            self._generation_path(generation_id)
+            previous_id = self._recover_pointer_unlocked()
+            sequence = self._next_transaction_sequence()
+            journal = self.transactions_path / f"{sequence:020d}-{generation_id}.json"
+            record = {
+                "generation_id": generation_id,
+                "previous_generation_id": previous_id,
+                "sequence": sequence,
+                "state": "PREPARED",
+            }
+            self._create_journal(journal, record)
+            self._replace_pointer_pair(generation_id, previous_id)
+            record["state"] = "COMMITTED"
+            self._atomic_json(journal, record)
 
     def current_id(self) -> str | None:
         return self._reference_id(self.current_path)
@@ -79,6 +84,10 @@ class StateStore:
 
     def recover_pointer(self) -> str | None:
         """Repair references from the newest durable transaction intent."""
+        with self._transaction_lock():
+            return self._recover_pointer_unlocked()
+
+    def _recover_pointer_unlocked(self) -> str | None:
         current_id = self.current_id()
         if self.read_only or not self.transactions_path.is_dir():
             return current_id
@@ -162,10 +171,12 @@ class StateStore:
         self._replace_reference(self.current_path, current_id)
 
     def _next_transaction_sequence(self) -> int:
-        transaction = self._latest_transaction()
-        if transaction is None:
-            return 1
-        return transaction[1]["sequence"] + 1
+        highest_sequence = 0
+        for journal in self.transactions_path.glob("*.json"):
+            prefix, separator, _ = journal.name.partition("-")
+            if separator and prefix.isdecimal():
+                highest_sequence = max(highest_sequence, int(prefix))
+        return highest_sequence + 1
 
     def _latest_transaction(self) -> tuple[Path, dict[str, Any]] | None:
         latest: tuple[Path, dict[str, Any]] | None = None
@@ -190,7 +201,10 @@ class StateStore:
                     self._generation_path(previous_id)
             except StateConflict:
                 continue
-            if latest is None or sequence > latest[1]["sequence"]:
+            if latest is None or (sequence, journal.name) > (
+                latest[1]["sequence"],
+                latest[0].name,
+            ):
                 latest = (journal, record)
         return latest
 
@@ -214,6 +228,30 @@ class StateStore:
         finally:
             if temporary.exists():
                 temporary.unlink()
+
+    def _create_journal(self, path: Path, value: Mapping[str, Any]) -> None:
+        try:
+            descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError as error:
+            raise StateConflict(f"journal already exists: {path.name}") from error
+        with os.fdopen(descriptor, "w", encoding="utf-8") as output:
+            json.dump(value, output, sort_keys=True)
+            output.write("\n")
+            output.flush()
+            os.fsync(output.fileno())
+        self._fsync_directory(path.parent)
+
+    @contextmanager
+    def _transaction_lock(self) -> Iterator[None]:
+        descriptor = os.open(
+            self.transaction_lock_path, os.O_WRONLY | os.O_CREAT, 0o600
+        )
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            yield
+        finally:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+            os.close(descriptor)
 
     def _require_writable(self) -> None:
         if self.read_only:

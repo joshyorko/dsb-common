@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -82,6 +83,59 @@ class StateStoreTests(unittest.TestCase):
 
         with self.assertRaises(StateConflict):
             store.commit_generation("escape")
+
+    def test_recover_pointer_completes_durable_prepared_journal(self) -> None:
+        store = StateStore(self.root)
+        store.create_generation("a", {"state": "ACTIVE"})
+        store.commit_generation("a")
+        store.create_generation("b", {"state": "ACTIVE"})
+        journal = store.transactions_path / "00000000000000000002-b.json"
+        store._atomic_json(
+            journal,
+            {
+                "generation_id": "b",
+                "previous_generation_id": "a",
+                "sequence": 2,
+                "state": "PREPARED",
+            },
+        )
+
+        self.assertEqual("b", store.recover_pointer())
+        self.assertEqual("b", store.current_id())
+        self.assertEqual("a", store.previous_id())
+        self.assertEqual(
+            "COMMITTED", json.loads(journal.read_text(encoding="utf-8"))["state"]
+        )
+
+    def test_recover_pointer_breaks_duplicate_sequences_deterministically(self) -> None:
+        store = StateStore(self.root)
+        store.create_generation("a", {"state": "ACTIVE"})
+        store.create_generation("b", {"state": "ACTIVE"})
+        store._atomic_json(
+            store.transactions_path / "00000000000000000001-b.json",
+            {
+                "generation_id": "b",
+                "previous_generation_id": "a",
+                "sequence": 1,
+                "state": "COMMITTED",
+            },
+        )
+        store._atomic_json(
+            store.transactions_path / "00000000000000000001-a.json",
+            {
+                "generation_id": "a",
+                "previous_generation_id": None,
+                "sequence": 1,
+                "state": "COMMITTED",
+            },
+        )
+        (store.transactions_path / "00000000000000000002-invalid.json").write_text(
+            "not json", encoding="utf-8"
+        )
+
+        self.assertEqual("b", store.recover_pointer())
+        self.assertEqual("b", store.current_id())
+        self.assertEqual("a", store.previous_id())
 
 
 if __name__ == "__main__":
