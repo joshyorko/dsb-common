@@ -145,7 +145,7 @@ class StateStoreTests(unittest.TestCase):
         store.commit_generation("a")
         store.create_generation("b", {"state": "ACTIVE"})
         store._atomic_json(
-            store.transactions_path / "00000000000000000002.json",
+            store.transactions_path / "00000000000000000050suffix.json",
             {
                 "generation_id": "b",
                 "previous_generation_id": "a",
@@ -161,7 +161,7 @@ class StateStoreTests(unittest.TestCase):
             json.loads(path.read_text(encoding="utf-8"))["sequence"]
             for path in store.transactions_path.glob("*.json")
         )
-        self.assertEqual([1, 2, 3], sequences)
+        self.assertEqual([1, 2, 51], sequences)
         self.assertEqual("c", store.current_id())
         self.assertEqual("b", store.previous_id())
 
@@ -219,7 +219,12 @@ class StateStoreTests(unittest.TestCase):
         ]
         self.assertEqual([1, 2], sorted(record["sequence"] for record in records))
         latest = max(records, key=lambda record: record["sequence"])
+        store.current_path.unlink()
+        store.previous_path.unlink()
+
         self.assertEqual(latest["generation_id"], store.recover_pointer())
+        self.assertEqual(latest["generation_id"], store.current_id())
+        self.assertEqual(latest["previous_generation_id"], store.previous_id())
 
 
 if __name__ == "__main__":

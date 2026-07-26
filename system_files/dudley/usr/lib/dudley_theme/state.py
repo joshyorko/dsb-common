@@ -5,6 +5,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import re
 import tempfile
 from contextlib import contextmanager
 from collections.abc import Iterator
@@ -174,9 +175,9 @@ class StateStore:
     def _next_transaction_sequence(self) -> int:
         highest_sequence = 0
         for journal in self.transactions_path.glob("*.json"):
-            prefix = journal.stem.partition("-")[0]
-            if prefix.isdecimal():
-                highest_sequence = max(highest_sequence, int(prefix))
+            prefix = re.match(r"\d+", journal.stem)
+            if prefix is not None:
+                highest_sequence = max(highest_sequence, int(prefix.group()))
             try:
                 sequence = json.loads(journal.read_text(encoding="utf-8"))["sequence"]
             except (json.JSONDecodeError, KeyError, OSError, TypeError):
