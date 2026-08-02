@@ -163,6 +163,12 @@
       "selectors": ["gnome"]
     },
     {
+      "source": "system_files/dudley/usr/share/dudley/homebrew-profiles.json",
+      "target": "/usr/share/dudley/homebrew-profiles.json",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
       "source": "system_files/dudley/usr/share/gnome-background-properties/dudley.xml",
       "target": "/usr/share/gnome-background-properties/dudley.xml",
       "kind": "config",
@@ -181,32 +187,8 @@
       "selectors": ["portable", "runtime-user"]
     },
     {
-      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-cli.Brewfile",
-      "target": "/usr/share/ublue-os/homebrew/dudley-cli.Brewfile",
-      "kind": "manifest",
-      "selectors": ["portable", "runtime-user"]
-    },
-    {
-      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-dev.Brewfile",
-      "target": "/usr/share/ublue-os/homebrew/dudley-dev.Brewfile",
-      "kind": "manifest",
-      "selectors": ["portable", "runtime-user"]
-    },
-    {
-      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile",
-      "target": "/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile",
-      "kind": "manifest",
-      "selectors": ["portable", "runtime-user"]
-    },
-    {
-      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-ide.Brewfile",
-      "target": "/usr/share/ublue-os/homebrew/dudley-ide.Brewfile",
-      "kind": "manifest",
-      "selectors": ["portable", "runtime-user"]
-    },
-    {
-      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile",
-      "target": "/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile",
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-default.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-default.Brewfile",
       "kind": "manifest",
       "selectors": ["portable", "runtime-user"]
     },

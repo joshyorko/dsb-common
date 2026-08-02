@@ -1,0 +1,30 @@
+{
+  "joshyorko_tools": {
+    "default": [
+      "action-server",
+      "camp",
+      "codex-release",
+      "devpod-appindicator-runtime-tools",
+      "devpod-linux",
+      "devsy",
+      "devsy-desktop",
+      "fizzy-cli-master",
+      "rcc",
+      "vscode-insiders-linux"
+    ],
+    "ai": [
+      "antigravity-cli",
+      "buzz-linux",
+      "fizzy-popper-self-hosted",
+      "fizzy-symphony",
+      "t3-code-linux",
+      "t3code-cli-main"
+    ],
+    "manual": [
+      "codex-desktop",
+      "codex-desktop-linux-builder",
+      "eitype",
+      "voxtype"
+    ]
+  }
+}

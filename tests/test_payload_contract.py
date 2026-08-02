@@ -23,6 +23,17 @@ WALLPAPER_CATALOG = (
 )
 FIRST_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-bedroom.png"
 SECOND_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-study.png"
+HOMEBREW_DIR = DUDLEY_SYSTEM_FILES / "usr/share/ublue-os/homebrew"
+HOMEBREW_PROFILES = DUDLEY_SYSTEM_FILES / "usr/share/dudley/homebrew-profiles.json"
+
+
+def brewfile_entries(path: Path, directive: str) -> set[str]:
+    prefix = f'{directive} "'
+    return {
+        line.strip()[len(prefix) : -1]
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith(prefix) and line.strip().endswith('"')
+    }
 
 
 class PayloadContractTests(unittest.TestCase):
@@ -78,6 +89,57 @@ class PayloadContractTests(unittest.TestCase):
         self.assertIn("bluefin", chrome_repo["selectors"])
         self.assertNotIn("portable", chrome_repo["selectors"])
         self.assertNotIn("ubuntu", chrome_repo["selectors"])
+
+    def test_dudley_homebrew_profiles_are_curated(self) -> None:
+        brewfiles = {path.name for path in HOMEBREW_DIR.glob("*.Brewfile")}
+        self.assertEqual(
+            {"dudley-default.Brewfile", "dudley-ai.Brewfile"}, brewfiles
+        )
+
+        default = HOMEBREW_DIR / "dudley-default.Brewfile"
+        formulae = brewfile_entries(default, "brew")
+        casks = brewfile_entries(default, "cask")
+
+        self.assertLessEqual(
+            {
+                "brunoborges/tap/ghx",
+                "rtk",
+                "awscli",
+                "dagger",
+                "k9s",
+                "kubernetes-cli",
+            },
+            formulae,
+        )
+        self.assertTrue({"gh", "kubectl", "podman", "podman-compose"}.isdisjoint(formulae))
+        self.assertLessEqual(
+            {
+                "joshyorko/tools/action-server",
+                "joshyorko/tools/devpod-linux",
+                "joshyorko/tools/devsy-desktop",
+                "joshyorko/tools/rcc",
+                "joshyorko/tools/vscode-insiders-linux",
+            },
+            casks,
+        )
+
+    def test_joshyorko_tools_profiles_follow_classification_policy(self) -> None:
+        default = HOMEBREW_DIR / "dudley-default.Brewfile"
+        ai = HOMEBREW_DIR / "dudley-ai.Brewfile"
+        default_entries = brewfile_entries(default, "brew") | brewfile_entries(default, "cask")
+        ai_entries = brewfile_entries(ai, "brew") | brewfile_entries(ai, "cask")
+        prefix = "joshyorko/tools/"
+        default_tools = {entry.removeprefix(prefix) for entry in default_entries if entry.startswith(prefix)}
+        ai_tools = {entry.removeprefix(prefix) for entry in ai_entries if entry.startswith(prefix)}
+        policy = json.loads(HOMEBREW_PROFILES.read_text(encoding="utf-8"))["joshyorko_tools"]
+        expected_default = set(policy["default"])
+        expected_ai = set(policy["ai"])
+        excluded = set(policy["manual"])
+
+        self.assertEqual(expected_default, default_tools)
+        self.assertEqual(expected_ai, ai_tools)
+        self.assertTrue(default_tools.isdisjoint(ai_tools))
+        self.assertTrue((default_tools | ai_tools).isdisjoint(excluded))
 
     def test_bluefin_install_includes_current_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,6 +1,7 @@
 # AI and agent tools for Dudley's Second Bedroom
 tap "anomalyco/tap"
 tap "charmbracelet/tap"
+tap "joshyorko/tools"
 tap "ublue-os/tap"
 tap "ublue-os/experimental-tap"
 
@@ -17,6 +18,10 @@ brew "qwen-code"
 brew "ramalama"
 brew "ublue-os/tap/linux-mcp-server"
 brew "whisper-cpp"
+brew "joshyorko/tools/antigravity-cli"
+brew "joshyorko/tools/fizzy-popper-self-hosted"
+brew "joshyorko/tools/fizzy-symphony"
+brew "joshyorko/tools/t3code-cli-main"
 
 cask "claude-code"
 cask "codex"
@@ -25,5 +30,7 @@ cask "ublue-os/tap/antigravity-linux"
 cask "ublue-os/experimental-tap/opencode-desktop-linux"
 cask "ublue-os/tap/goose-linux"
 cask "ublue-os/tap/lm-studio-linux"
+cask "joshyorko/tools/buzz-linux"
+cask "joshyorko/tools/t3-code-linux"
 
 flatpak "ai.jan.Jan"

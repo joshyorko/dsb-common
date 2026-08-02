@@ -30,12 +30,13 @@
 - Delete: `system_files/dudley/usr/share/ublue-os/homebrew/dudley-ide.Brewfile`
 - Delete: `system_files/dudley/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile`
 - Modify: `contract/dudley-payload.v1.json`
+- Create: `system_files/dudley/usr/share/dudley/homebrew-profiles.json`
 
 **Interfaces:**
 - Consumes: Homebrew Brewfile syntax and the existing payload contract schema.
 - Produces: `/usr/share/ublue-os/homebrew/dudley-default.Brewfile` and `dudley-ai.Brewfile`.
 
-- [ ] **Step 1: Write failing contract tests** asserting the two-file manifest set, required tools, forbidden tools, unique Kubernetes CLI provider, and exact `joshyorko/tools` default/AI/excluded partition.
+- [ ] **Step 1: Write failing contract tests** asserting the two-file manifest set, required tools, forbidden tools, unique Kubernetes CLI provider, and loading the `joshyorko/tools` classifications from the shipped profile-policy config.
 - [ ] **Step 2: Run `python3 -m unittest tests.test_payload_contract -v`** and verify the new assertions fail because the legacy manifests and missing tap packages remain.
 - [ ] **Step 3: Create the two curated Brewfiles and update the JSON contract** with the exact package classifications from the approved design.
 - [ ] **Step 4: Re-run `python3 -m unittest tests.test_payload_contract -v`** and verify the manifest tests pass.

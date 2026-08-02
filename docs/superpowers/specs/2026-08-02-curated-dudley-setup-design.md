@@ -63,9 +63,11 @@ Exclude packages Josh manages manually:
 - `eitype`;
 - `voxtype`.
 
-Every current `joshyorko/tools` package must appear in exactly one of the
-default, AI, or excluded sets. Contract tests enforce that partition so new tap
-packages require an intentional classification.
+The shipped `/usr/share/dudley/homebrew-profiles.json` is the source of truth
+for the requested default, AI, and manually managed classifications. Tests
+load that config and validate the Brewfiles against it instead of hard-coding
+the package inventory in Python. Updating the classification only requires
+updating the config and corresponding Brewfile.
 
 ## Homebrew behavior
 
@@ -97,8 +99,8 @@ Tests must prove:
 - default and AI profile routing invokes the intended Brewfile;
 - `ghx` is present and `gh` is absent;
 - required default tools are present without duplicate Kubectl declarations;
-- the full `joshyorko/tools` inventory is partitioned between default, AI, and
-  excluded sets;
+- the requested `joshyorko/tools` packages are in the intended profile, the
+  profiles do not overlap, and manually managed packages remain absent;
 - Homebrew's no-ask file is written idempotently while preserving other values;
 - the update recipe selects bootc when `rpm-ostreed.conf` is missing and retains
   the Fedora unlocked-layering path.
