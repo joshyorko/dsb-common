@@ -36,6 +36,7 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 - `usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override`
 - `usr/bin/dudley-build-info`
 - `usr/share/ublue-os/homebrew/dudley-*.Brewfile`
+- `usr/share/dudley/homebrew-profiles.json`
 - `usr/share/ublue-os/just/60-dudley.just`
 - `usr/share/ublue-os/just/update.just`
 - `usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh`
@@ -52,14 +53,14 @@ When migrating content from `dudleys-second-bedroom`, place reusable non-branded
 
 Dudley's portable developer experience lives here instead of in a final product image. It tracks the user-space parts of Bluefin DX and Project Bluefin common that can travel cleanly across current Bluefin-based images and future Dakota-style assembly:
 
-- extra CLI/session tools such as `atuin`, `mise`, and `podman-tui`
-- IDE/editor tooling in `dudley-ide.Brewfile`
+- curated CLI, development, IDE, font, and Kubernetes tooling in `dudley-default.Brewfile`
 - extra Nerd Fonts from Bluefin common
 - DX Flatpaks in `dudley-dx.preinstall`
 - VS Code defaults use JetBrains Mono 16, with a one-time migration for the previous generic monospace settings
 - existing Bluefin user profiles re-enable the upstream top-panel menu for system monitoring, settings, applications, documentation, and Ask Bluefin
-- `ujust dudley dx` as the user-space setup entrypoint
-- opt-in AI and agent tooling through `dudley-ai.Brewfile`, `ujust dudley ai`, and `ujust dudley agents`
+- `ujust dudley` as the user-space setup entrypoint
+- opt-in AI tooling through `dudley-ai.Brewfile` and `ujust dudley ai`
+- profile and build details through `ujust dudley info`
 
 Fedora/DNF packages, systemd service enablement, Docker/libvirt/incus group creation, BuildStream elements, bootc metadata, and baked browser/package installs remain final-image concerns. Put those in `dudley-os`, Dakota/BuildStream product targets, or sysexts rather than this shared payload layer.
 

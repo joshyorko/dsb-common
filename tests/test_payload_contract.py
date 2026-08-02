@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import struct
 import subprocess
@@ -23,6 +24,19 @@ WALLPAPER_CATALOG = (
 )
 FIRST_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-bedroom.png"
 SECOND_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-study.png"
+HOMEBREW_DIR = DUDLEY_SYSTEM_FILES / "usr/share/ublue-os/homebrew"
+HOMEBREW_PROFILES = DUDLEY_SYSTEM_FILES / "usr/share/dudley/homebrew-profiles.json"
+DUDLEY_JUST = DUDLEY_SYSTEM_FILES / "usr/share/ublue-os/just/60-dudley.just"
+NO_ASK_HELPER = DUDLEY_SYSTEM_FILES / "usr/libexec/dudley/configure-homebrew-no-ask"
+
+
+def brewfile_entries(path: Path, directive: str) -> set[str]:
+    prefix = f'{directive} "'
+    return {
+        line.strip()[len(prefix) : -1]
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith(prefix) and line.strip().endswith('"')
+    }
 
 
 class PayloadContractTests(unittest.TestCase):
@@ -78,6 +92,98 @@ class PayloadContractTests(unittest.TestCase):
         self.assertIn("bluefin", chrome_repo["selectors"])
         self.assertNotIn("portable", chrome_repo["selectors"])
         self.assertNotIn("ubuntu", chrome_repo["selectors"])
+
+    def test_dudley_homebrew_profiles_are_curated(self) -> None:
+        brewfiles = {path.name for path in HOMEBREW_DIR.glob("*.Brewfile")}
+        self.assertEqual(
+            {"dudley-default.Brewfile", "dudley-ai.Brewfile"}, brewfiles
+        )
+
+        default = HOMEBREW_DIR / "dudley-default.Brewfile"
+        formulae = brewfile_entries(default, "brew")
+        casks = brewfile_entries(default, "cask")
+
+        self.assertLessEqual(
+            {
+                "brunoborges/tap/ghx",
+                "rtk",
+                "awscli",
+                "dagger",
+                "k9s",
+                "kubernetes-cli",
+            },
+            formulae,
+        )
+        self.assertTrue({"gh", "kubectl", "podman", "podman-compose"}.isdisjoint(formulae))
+        self.assertLessEqual(
+            {
+                "joshyorko/tools/action-server",
+                "joshyorko/tools/devpod-linux",
+                "joshyorko/tools/devsy-desktop",
+                "joshyorko/tools/rcc",
+                "joshyorko/tools/vscode-insiders-linux",
+            },
+            casks,
+        )
+
+    def test_joshyorko_tools_profiles_follow_classification_policy(self) -> None:
+        default = HOMEBREW_DIR / "dudley-default.Brewfile"
+        ai = HOMEBREW_DIR / "dudley-ai.Brewfile"
+        default_entries = brewfile_entries(default, "brew") | brewfile_entries(default, "cask")
+        ai_entries = brewfile_entries(ai, "brew") | brewfile_entries(ai, "cask")
+        prefix = "joshyorko/tools/"
+        default_tools = {entry.removeprefix(prefix) for entry in default_entries if entry.startswith(prefix)}
+        ai_tools = {entry.removeprefix(prefix) for entry in ai_entries if entry.startswith(prefix)}
+        policy = json.loads(HOMEBREW_PROFILES.read_text(encoding="utf-8"))["joshyorko_tools"]
+        expected_default = set(policy["default"])
+        expected_ai = set(policy["ai"])
+        excluded = set(policy["manual"])
+
+        self.assertEqual(expected_default, default_tools)
+        self.assertEqual(expected_ai, ai_tools)
+        self.assertTrue(default_tools.isdisjoint(ai_tools))
+        self.assertTrue((default_tools | ai_tools).isdisjoint(excluded))
+
+    def test_dudley_just_exposes_one_setup_dispatcher(self) -> None:
+        recipe = DUDLEY_JUST.read_text(encoding="utf-8")
+        recipe_names = set(
+            re.findall(r"^([a-z0-9_-]+)(?:\s+[^:]*)?:$", recipe, re.MULTILINE)
+        )
+        self.assertIn('dudley target="":', recipe)
+        self.assertIn('run_bundle "dudley-default.Brewfile"', recipe)
+        self.assertIn('run_bundle "dudley-ai.Brewfile"', recipe)
+        self.assertIn('/usr/bin/dudley-build-info', recipe)
+        self.assertEqual({"dudley"}, {name for name in recipe_names if name.startswith("dudley")})
+
+    def test_homebrew_no_ask_helper_preserves_settings_and_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            env_file = home / ".homebrew/brew.env"
+            env_file.parent.mkdir(parents=True)
+            env_file.write_text(
+                "HOMEBREW_NO_ANALYTICS=1\nHOMEBREW_NO_ASK=0\n",
+                encoding="utf-8",
+            )
+            env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
+
+            subprocess.run(["bash", str(NO_ASK_HELPER)], cwd=ROOT, env=env, check=True)
+            first = env_file.read_text(encoding="utf-8")
+            subprocess.run(["bash", str(NO_ASK_HELPER)], cwd=ROOT, env=env, check=True)
+            second = env_file.read_text(encoding="utf-8")
+
+            self.assertEqual(first, second)
+            self.assertEqual(1, first.count("HOMEBREW_NO_ASK="))
+            self.assertIn("HOMEBREW_NO_ASK=1", first)
+            self.assertIn("HOMEBREW_NO_ANALYTICS=1", first)
+
+    def test_update_checks_rpm_ostree_config_exists_before_grep(self) -> None:
+        recipe = (
+            DUDLEY_SYSTEM_FILES / "usr/share/ublue-os/just/update.just"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "if [[ -f /etc/rpm-ostreed.conf ]] && grep -q -E",
+            recipe,
+        )
 
     def test_bluefin_install_includes_current_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
