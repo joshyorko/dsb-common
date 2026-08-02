@@ -67,6 +67,12 @@
       "selectors": ["gnome", "runtime-user"]
     },
     {
+      "source": "system_files/dudley/usr/libexec/dudley/configure-homebrew-no-ask",
+      "target": "/usr/libexec/dudley/configure-homebrew-no-ask",
+      "kind": "executable",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
       "source": "system_files/dudley/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png",
       "target": "/usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png",
       "kind": "image",

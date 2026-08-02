@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config_dir="${HOME:?HOME is required}/.homebrew"
+env_file="$config_dir/brew.env"
+mkdir -p "$config_dir"
+
+tmp_file="$(mktemp "$config_dir/.brew.env.XXXXXX")"
+trap 'rm -f "$tmp_file"' EXIT
+if [[ -f "$env_file" ]]; then
+    grep -v '^HOMEBREW_NO_ASK=' "$env_file" >"$tmp_file" || true
+fi
+printf '%s\n' 'HOMEBREW_NO_ASK=1' >>"$tmp_file"
+mv "$tmp_file" "$env_file"
+trap - EXIT

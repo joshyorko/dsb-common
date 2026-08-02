@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import struct
 import subprocess
@@ -25,6 +26,8 @@ FIRST_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-bedroom.png"
 SECOND_NEW_WALLPAPER = WALLPAPER_DIR / "dudley-os-clever-girl-golden-study.png"
 HOMEBREW_DIR = DUDLEY_SYSTEM_FILES / "usr/share/ublue-os/homebrew"
 HOMEBREW_PROFILES = DUDLEY_SYSTEM_FILES / "usr/share/dudley/homebrew-profiles.json"
+DUDLEY_JUST = DUDLEY_SYSTEM_FILES / "usr/share/ublue-os/just/60-dudley.just"
+NO_ASK_HELPER = DUDLEY_SYSTEM_FILES / "usr/libexec/dudley/configure-homebrew-no-ask"
 
 
 def brewfile_entries(path: Path, directive: str) -> set[str]:
@@ -140,6 +143,38 @@ class PayloadContractTests(unittest.TestCase):
         self.assertEqual(expected_ai, ai_tools)
         self.assertTrue(default_tools.isdisjoint(ai_tools))
         self.assertTrue((default_tools | ai_tools).isdisjoint(excluded))
+
+    def test_dudley_just_exposes_one_setup_dispatcher(self) -> None:
+        recipe = DUDLEY_JUST.read_text(encoding="utf-8")
+        recipe_names = set(
+            re.findall(r"^([a-z0-9_-]+)(?:\s+[^:]*)?:$", recipe, re.MULTILINE)
+        )
+        self.assertIn('dudley target="":', recipe)
+        self.assertIn('run_bundle "dudley-default.Brewfile"', recipe)
+        self.assertIn('run_bundle "dudley-ai.Brewfile"', recipe)
+        self.assertIn('/usr/bin/dudley-build-info', recipe)
+        self.assertEqual({"dudley"}, {name for name in recipe_names if name.startswith("dudley")})
+
+    def test_homebrew_no_ask_helper_preserves_settings_and_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            env_file = home / ".homebrew/brew.env"
+            env_file.parent.mkdir(parents=True)
+            env_file.write_text(
+                "HOMEBREW_NO_ANALYTICS=1\nHOMEBREW_NO_ASK=0\n",
+                encoding="utf-8",
+            )
+            env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
+
+            subprocess.run(["bash", str(NO_ASK_HELPER)], cwd=ROOT, env=env, check=True)
+            first = env_file.read_text(encoding="utf-8")
+            subprocess.run(["bash", str(NO_ASK_HELPER)], cwd=ROOT, env=env, check=True)
+            second = env_file.read_text(encoding="utf-8")
+
+            self.assertEqual(first, second)
+            self.assertEqual(1, first.count("HOMEBREW_NO_ASK="))
+            self.assertIn("HOMEBREW_NO_ASK=1", first)
+            self.assertIn("HOMEBREW_NO_ANALYTICS=1", first)
 
     def test_bluefin_install_includes_current_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
