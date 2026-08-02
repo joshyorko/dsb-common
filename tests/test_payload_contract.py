@@ -176,6 +176,15 @@ class PayloadContractTests(unittest.TestCase):
             self.assertIn("HOMEBREW_NO_ASK=1", first)
             self.assertIn("HOMEBREW_NO_ANALYTICS=1", first)
 
+    def test_update_checks_rpm_ostree_config_exists_before_grep(self) -> None:
+        recipe = (
+            DUDLEY_SYSTEM_FILES / "usr/share/ublue-os/just/update.just"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "if [[ -f /etc/rpm-ostreed.conf ]] && grep -q -E",
+            recipe,
+        )
+
     def test_bluefin_install_includes_current_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp)
