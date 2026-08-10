@@ -21,6 +21,10 @@ dudley action="" target="" mode="":
     INFO_COMMAND="${DUDLEY_INFO_COMMAND:-/usr/bin/dudley-build-info}"
 
     ensure_brew() {
+        [[ -f "$BREW_HELPER" ]] || {
+            echo "ERROR: BREW_HELPER not found: $BREW_HELPER" >&2
+            exit 1
+        }
         # shellcheck disable=SC1090
         source "$BREW_HELPER"
         ensure_dudley_brew

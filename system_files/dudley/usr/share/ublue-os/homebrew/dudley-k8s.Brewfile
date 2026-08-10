@@ -1,5 +1,4 @@
 # Compatibility Kubernetes and cloud-native profile.
-tap "buildpacks/tap"
 tap "k0sproject/tap"
 
 brew "cdk8s"

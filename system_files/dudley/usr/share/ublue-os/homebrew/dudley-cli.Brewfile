@@ -1,5 +1,4 @@
 # Compatibility CLI profile for former Bluefin DX users.
-tap "buildpacks/tap"
 tap "valkyrie00/bbrew"
 
 brew "atuin"
