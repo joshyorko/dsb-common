@@ -73,6 +73,7 @@ class PayloadContractTests(unittest.TestCase):
         valid_selectors = {
             "portable",
             "bluefin",
+            "dakota",
             "fedora-family",
             "ubuntu",
             "gnome",
@@ -198,6 +199,22 @@ class PayloadContractTests(unittest.TestCase):
                 self.assertIn(entry["dakota"], statuses)
                 self.assertTrue(entry["source"])
 
+        areas = {entry["area"] for entry in manifest["entries"]}
+        self.assertTrue(
+            {
+                "ujust",
+                "homebrew",
+                "motd",
+                "terminal",
+                "shell",
+                "themes/wallpapers",
+                "bazaar",
+                "flatpaks",
+                "vscode",
+                "user-setup",
+            }
+            <= areas
+        )
         names = {entry["name"] for entry in manifest["entries"]}
         self.assertIn("dudley brew cli|dev|ide|fonts|k8s|all", names)
         self.assertIn("Ghostty native adapter", names)
@@ -423,6 +440,9 @@ printf 'extensions\\n' >> {brew_log_path}
                 (dest / "usr/share/gnome-background-properties/dudley.xml").is_file()
             )
             self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())
+            self.assertTrue((dest / "etc/dconf/db/distro.d/98-dudley-ptyxis").is_file())
+            self.assertTrue((dest / "usr/share/dudley/terminal/ptyxis.dconf").is_file())
+            self.assertFalse((dest / "usr/share/dudley/terminal/ghostty.conf").exists())
 
     def test_dakota_install_includes_portable_and_ghostty_payload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -438,6 +458,16 @@ printf 'extensions\\n' >> {brew_log_path}
             self.assertTrue((dest / "etc/uwelcome/config.json").is_file())
             self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())
             self.assertFalse((dest / "etc/dconf/db/distro.d/99-dudley-terminal-keybindings").exists())
+            self.assertFalse((dest / "etc/dconf/db/distro.d/98-dudley-ptyxis").exists())
+            self.assertFalse((dest / "usr/share/dudley/terminal/ptyxis.dconf").exists())
+            self.assertFalse((dest / "etc/xdg/autostart/dudley-random-wallpaper.desktop").exists())
+            self.assertFalse((dest / "usr/bin/dudley-random-wallpaper").exists())
+            self.assertFalse(
+                (dest / "usr/share/ublue-os/user-setup.hooks.d/12-dudley-desktop-parity.sh").exists()
+            )
+            self.assertFalse(
+                (dest / "usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh").exists()
+            )
             self.assertFalse((dest / "usr/share/backgrounds/dudley").exists())
 
     def test_gnome_wallpaper_catalog_covers_dudley_payload(self) -> None:

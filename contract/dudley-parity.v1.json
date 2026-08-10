@@ -175,27 +175,59 @@
     },
     {
       "area": "motd",
-      "name": "bash/zsh and fish login hooks",
+      "name": "uwelcome login activation",
       "status": "shared",
       "source": "system_files/shared/etc/profile.d/uwelcome.sh",
       "bluefin": "shared",
       "dakota": "shared"
     },
     {
+      "area": "shell",
+      "name": "Bash/Zsh and Fish interactive greeting hooks",
+      "status": "shared",
+      "source": "system_files/shared/etc/profile.d/uwelcome.sh and system_files/shared/usr/share/fish/vendor_conf.d/fish_greeting.fish",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
       "area": "desktop",
-      "name": "GNOME dconf and Dudley wallpapers",
+      "name": "GNOME dconf defaults",
       "status": "shared",
       "source": "system_files/dudley/etc/dconf/db/distro.d/",
       "bluefin": "shared",
       "dakota": "intentionally-omitted"
     },
     {
-      "area": "desktop",
+      "area": "themes/wallpapers",
+      "name": "Dudley GNOME themes and wallpapers",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/backgrounds/dudley/ and system_files/dudley/usr/share/glib-2.0/schemas/",
+      "bluefin": "shared",
+      "dakota": "intentionally-omitted"
+    },
+    {
+      "area": "bazaar",
       "name": "Bazaar launcher migration",
       "status": "shared",
       "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
       "bluefin": "shared",
       "dakota": "product-specific"
+    },
+    {
+      "area": "user-setup",
+      "name": "Bluefin desktop and Bazaar user-setup hooks",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/12-dudley-desktop-parity.sh and 15-dudley-bazaar-launcher.sh",
+      "bluefin": "shared",
+      "dakota": "intentionally-omitted"
+    },
+    {
+      "area": "user-setup",
+      "name": "Portable VS Code first-login hook",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh",
+      "bluefin": "shared",
+      "dakota": "shared"
     },
     {
       "area": "flatpaks",

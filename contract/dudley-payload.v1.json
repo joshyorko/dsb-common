@@ -4,14 +4,14 @@
   "profiles": {
     "bluefin": ["portable", "bluefin", "fedora-family", "gnome"],
     "ubuntu": ["portable", "ubuntu", "gnome"],
-    "dakota": ["portable", "runtime-user"]
+    "dakota": ["portable", "runtime-user", "dakota"]
   },
   "files": [
     {
       "source": "system_files/dudley/etc/dconf/db/distro.d/99-dudley-terminal-keybindings",
       "target": "/etc/dconf/db/distro.d/99-dudley-terminal-keybindings",
       "kind": "config",
-      "selectors": ["gnome"]
+      "selectors": ["bluefin"]
     },
     {
       "source": "system_files/dudley/etc/dconf/db/local.d/.gitkeep",
@@ -47,7 +47,7 @@
       "source": "system_files/dudley/etc/xdg/autostart/dudley-random-wallpaper.desktop",
       "target": "/etc/xdg/autostart/dudley-random-wallpaper.desktop",
       "kind": "config",
-      "selectors": ["gnome", "runtime-user"]
+      "selectors": ["gnome"]
     },
     {
       "source": "system_files/dudley/etc/yum.repos.d/google-chrome.repo",
@@ -65,7 +65,7 @@
       "source": "system_files/dudley/usr/bin/dudley-random-wallpaper",
       "target": "/usr/bin/dudley-random-wallpaper",
       "kind": "executable",
-      "selectors": ["gnome", "runtime-user"]
+      "selectors": ["gnome"]
     },
     {
       "source": "system_files/dudley/usr/libexec/dudley/configure-homebrew-no-ask",
@@ -215,13 +215,13 @@
       "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/12-dudley-desktop-parity.sh",
       "target": "/usr/share/ublue-os/user-setup.hooks.d/12-dudley-desktop-parity.sh",
       "kind": "executable",
-      "selectors": ["bluefin", "runtime-user"]
+      "selectors": ["bluefin"]
     },
     {
       "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
       "target": "/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
       "kind": "executable",
-      "selectors": ["bluefin", "runtime-user"]
+      "selectors": ["bluefin"]
     },
     {
       "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh",
@@ -251,7 +251,7 @@
       "source": "system_files/dudley/etc/dconf/db/distro.d/98-dudley-ptyxis",
       "target": "/etc/dconf/db/distro.d/98-dudley-ptyxis",
       "kind": "config",
-      "selectors": ["gnome"]
+      "selectors": ["bluefin"]
     },
     {
       "source": "system_files/dudley/usr/libexec/dudley/ensure-homebrew",
@@ -269,13 +269,13 @@
       "source": "system_files/dudley/usr/share/dudley/terminal/ghostty.conf",
       "target": "/usr/share/dudley/terminal/ghostty.conf",
       "kind": "config",
-      "selectors": ["portable", "runtime-user"]
+      "selectors": ["dakota"]
     },
     {
       "source": "system_files/dudley/usr/share/dudley/terminal/ptyxis.dconf",
       "target": "/usr/share/dudley/terminal/ptyxis.dconf",
       "kind": "config",
-      "selectors": ["portable", "runtime-user"]
+      "selectors": ["bluefin"]
     },
     {
       "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-cli.Brewfile",
