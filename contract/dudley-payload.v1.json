@@ -3,7 +3,8 @@
   "description": "Portable Dudley payload contract exported by dsb-common.",
   "profiles": {
     "bluefin": ["portable", "bluefin", "fedora-family", "gnome"],
-    "ubuntu": ["portable", "ubuntu", "gnome"]
+    "ubuntu": ["portable", "ubuntu", "gnome"],
+    "dakota": ["portable", "runtime-user"]
   },
   "files": [
     {
@@ -245,6 +246,90 @@
       "target": "/usr/share/ublue-os/just/60-custom.just",
       "kind": "config",
       "selectors": ["bluefin", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/etc/dconf/db/distro.d/98-dudley-ptyxis",
+      "target": "/etc/dconf/db/distro.d/98-dudley-ptyxis",
+      "kind": "config",
+      "selectors": ["gnome"]
+    },
+    {
+      "source": "system_files/dudley/usr/libexec/dudley/ensure-homebrew",
+      "target": "/usr/libexec/dudley/ensure-homebrew",
+      "kind": "executable",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/terminal-contract.json",
+      "target": "/usr/share/dudley/terminal-contract.json",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/terminal/ghostty.conf",
+      "target": "/usr/share/dudley/terminal/ghostty.conf",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/dudley/terminal/ptyxis.dconf",
+      "target": "/usr/share/dudley/terminal/ptyxis.dconf",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-cli.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-cli.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-dev.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-dev.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-fonts.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-ide.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-ide.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile",
+      "target": "/usr/share/ublue-os/homebrew/dudley-k8s.Brewfile",
+      "kind": "manifest",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/shared/etc/profile.d/uwelcome.sh",
+      "target": "/etc/profile.d/uwelcome.sh",
+      "kind": "executable",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/shared/etc/ublue-os/tags.json",
+      "target": "/etc/ublue-os/tags.json",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/shared/etc/uwelcome/config.json",
+      "target": "/etc/uwelcome/config.json",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/shared/usr/share/fish/vendor_conf.d/fish_greeting.fish",
+      "target": "/usr/share/fish/vendor_conf.d/fish_greeting.fish",
+      "kind": "config",
+      "selectors": ["portable", "runtime-user"]
     }
   ]
 }

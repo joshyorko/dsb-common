@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MANIFEST_PATH="/etc/dudley/build-manifest.json"
+MANIFEST_PATH="${DUDLEY_BUILD_MANIFEST:-/etc/dudley/build-manifest.json}"
 
 usage() {
     cat <<'USAGE'
@@ -22,9 +22,8 @@ display_formatted() {
     local manifest_path="$1"
 
     if [[ ! -f "$manifest_path" ]]; then
-        echo "Error: Build manifest not found at $manifest_path" >&2
-        echo "This image is missing Dudley build metadata from final assembly." >&2
-        exit 1
+        echo "Dudley build metadata is unavailable (final assembly has not provided $manifest_path)."
+        return 0
     fi
 
     if ! command -v jq >/dev/null 2>&1; then
@@ -66,8 +65,8 @@ display_json() {
     local manifest_path="$1"
 
     if [[ ! -f "$manifest_path" ]]; then
-        echo "{\"error\":\"Manifest not found\",\"path\":\"$manifest_path\"}" >&2
-        exit 1
+        printf '{"error":"Manifest not found","path":"%s"}\n' "$manifest_path"
+        return 0
     fi
 
     if command -v jq >/dev/null 2>&1; then

@@ -59,6 +59,12 @@ jobs:
               echo "::endgroup::"
             done
 
+      - name: Validate live Brew metadata and Linux artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-brewfiles.py --network --artifacts
+
       - name: Validate Flatpak preinstall files
         shell: bash
         run: |

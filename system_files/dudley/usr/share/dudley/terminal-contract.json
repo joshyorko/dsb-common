@@ -1,0 +1,55 @@
+{
+  "schema": "dudley-terminal.v1",
+  "description": "Emulator-neutral Dudley terminal defaults.",
+  "defaults": {
+    "initial_size": {
+      "columns": 120,
+      "rows": 40
+    },
+    "font": {
+      "family": "JetBrains Mono",
+      "size": 16
+    },
+    "shell": {
+      "login": true,
+      "integration": "detect"
+    },
+    "theme": {
+      "name": "catppuccin-mocha",
+      "palette": "catppuccin-dynamic",
+      "colors": {
+        "background": "1e1e2e",
+        "foreground": "cdd6f4",
+        "cursor": "f5e0e6",
+        "selection_background": "45475a",
+        "selection_foreground": "cdd6f4"
+      }
+    },
+    "shortcuts": {
+      "new_window": "ctrl+alt+t",
+      "copy": "ctrl+shift+c",
+      "paste": "ctrl+shift+v"
+    },
+    "clipboard": {
+      "copy_on_select": false,
+      "read": "allow",
+      "write": "allow"
+    },
+    "url_handling": {
+      "detect": true,
+      "open": "default-browser"
+    }
+  },
+  "adapters": {
+    "ptyxis": {
+      "application": "org.gnome.Ptyxis",
+      "font_name": "JetBrains Mono 16",
+      "palette": "catppuccin-dynamic",
+      "terminal_command": "xdg-terminal-exec"
+    },
+    "ghostty": {
+      "config": "/usr/share/dudley/terminal/ghostty.conf",
+      "shell_command": "user-login-shell"
+    }
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "schema": "dudley-parity.v1",
+  "description": "Reviewed ownership and consumer applicability for the reusable Dudley/Bluefin experience.",
+  "status_labels": {
+    "shared": "Shared by dsb-common",
+    "inherited": "Provided by the consuming base",
+    "dudley-replacement": "Dudley replacement or compatibility wrapper",
+    "intentionally-omitted": "Intentionally not applicable",
+    "product-specific": "Owned by the final consumer image"
+  },
+  "consumers": [
+    "bluefin",
+    "dakota"
+  ],
+  "entries": [
+    {
+      "area": "ujust",
+      "name": "dudley",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley brew cli|dev|ide|fonts|k8s|all",
+      "status": "dudley-replacement",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "dudley-replacement",
+      "dakota": "dudley-replacement"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley setup all",
+      "status": "dudley-replacement",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "dudley-replacement",
+      "dakota": "dudley-replacement"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley ai",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley dx",
+      "status": "dudley-replacement",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "dudley-replacement",
+      "dakota": "dudley-replacement"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley tools",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley list|help",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley extensions [force]",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "ujust",
+      "name": "devmode|toggle-devmode",
+      "status": "dudley-replacement",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "dudley-replacement",
+      "dakota": "dudley-replacement"
+    },
+    {
+      "area": "ujust",
+      "name": "toggle-user-motd",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/just/60-dudley.just",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "ujust",
+      "name": "install-jetbrains-toolbox|install-opentabletdriver",
+      "status": "shared",
+      "source": "system_files/shared/usr/share/ublue-os/just/60-custom.just",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "ujust",
+      "name": "bluefin-cli",
+      "status": "inherited",
+      "source": "consuming Bluefin base",
+      "bluefin": "inherited",
+      "dakota": "intentionally-omitted"
+    },
+    {
+      "area": "ujust",
+      "name": "toggle-testing|setup-vms|toggle-vms|install-system-flatpaks|bluefin-apps|bazaar-preview|check-sb-key|cncf",
+      "status": "inherited",
+      "source": "consuming base or product",
+      "bluefin": "inherited",
+      "dakota": "product-specific"
+    },
+    {
+      "area": "ujust",
+      "name": "bios|bios-info|clean-system|logs-this-boot|logs-last-boot|device-info|benchmark",
+      "status": "inherited",
+      "source": "consuming Bluefin base",
+      "bluefin": "inherited",
+      "dakota": "product-specific"
+    },
+    {
+      "area": "ujust",
+      "name": "dudley-dakota|dx-group",
+      "status": "product-specific",
+      "source": "dudley-os",
+      "bluefin": "intentionally-omitted",
+      "dakota": "product-specific"
+    },
+    {
+      "area": "homebrew",
+      "name": "curated Dudley profiles",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/homebrew/",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "terminal",
+      "name": "emulator-neutral defaults",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/dudley/terminal-contract.json",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "terminal",
+      "name": "Ptyxis native adapter",
+      "status": "shared",
+      "source": "system_files/dudley/etc/dconf/db/distro.d/98-dudley-ptyxis",
+      "bluefin": "shared",
+      "dakota": "intentionally-omitted"
+    },
+    {
+      "area": "terminal",
+      "name": "Ghostty native adapter",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/dudley/terminal/ghostty.conf",
+      "bluefin": "intentionally-omitted",
+      "dakota": "shared"
+    },
+    {
+      "area": "motd",
+      "name": "uwelcome configuration and umotd tags",
+      "status": "shared",
+      "source": "system_files/shared/etc/uwelcome/config.json",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "motd",
+      "name": "bash/zsh and fish login hooks",
+      "status": "shared",
+      "source": "system_files/shared/etc/profile.d/uwelcome.sh",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "desktop",
+      "name": "GNOME dconf and Dudley wallpapers",
+      "status": "shared",
+      "source": "system_files/dudley/etc/dconf/db/distro.d/",
+      "bluefin": "shared",
+      "dakota": "intentionally-omitted"
+    },
+    {
+      "area": "desktop",
+      "name": "Bazaar launcher migration",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh",
+      "bluefin": "shared",
+      "dakota": "product-specific"
+    },
+    {
+      "area": "flatpaks",
+      "name": "Dudley default and DX preinstall manifests",
+      "status": "shared",
+      "source": "system_files/dudley/etc/flatpak/preinstall.d/",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "vscode",
+      "name": "VS Code settings, extensions, and first-login hook",
+      "status": "shared",
+      "source": "system_files/dudley/usr/share/ublue-os/",
+      "bluefin": "shared",
+      "dakota": "shared"
+    },
+    {
+      "area": "repository",
+      "name": "Google Chrome RPM repository definition",
+      "status": "shared",
+      "source": "system_files/dudley/etc/yum.repos.d/google-chrome.repo",
+      "bluefin": "shared",
+      "dakota": "intentionally-omitted"
+    },
+    {
+      "area": "repository",
+      "name": "Google Chrome package installation and repository cleanup",
+      "status": "product-specific",
+      "source": "dudley-os",
+      "bluefin": "product-specific",
+      "dakota": "product-specific"
+    },
+    {
+      "area": "runtime",
+      "name": "final image metadata and bootc/image assembly",
+      "status": "product-specific",
+      "source": "dudley-os",
+      "bluefin": "product-specific",
+      "dakota": "product-specific"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Dudley shared terminal contract, rendered for Ptyxis.
+[org/gnome/Ptyxis]
+audible-bell=false
+prompt-on-close=true
+restore-session=false
+
+[org/gnome/Ptyxis/Profiles/2871e8027773ae74d6c87a5f659bbc74]
+font-name='JetBrains Mono 16'
+palette='catppuccin-dynamic'

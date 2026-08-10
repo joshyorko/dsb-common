@@ -53,7 +53,9 @@ def install_entry(entry: dict, dest: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Install dsb-common Dudley payload by profile.")
-    parser.add_argument("--profile", required=True, choices=["bluefin", "ubuntu"])
+    parser.add_argument(
+        "--profile", required=True, choices=["bluefin", "ubuntu", "dakota"]
+    )
     parser.add_argument("--dest", required=True, type=Path)
     parser.add_argument("--contract", default=DEFAULT_CONTRACT, type=Path)
     parser.add_argument("--dry-run", action="store_true")

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+_dudley_add_homebrew_paths() {
+    local path
+    local candidates=()
+
+    if [[ -n "${DUDLEY_BREW_BIN:-}" ]]; then
+        candidates+=("$DUDLEY_BREW_BIN")
+    fi
+    candidates+=(
+        "$HOME/.linuxbrew/bin"
+        "/home/linuxbrew/.linuxbrew/bin"
+        "/opt/homebrew/bin"
+    )
+
+    for path in "${candidates[@]}"; do
+        if [[ -x "$path/brew" ]]; then
+            case ":${PATH}:" in
+                *":${path}:"*) ;;
+                *) PATH="${path}:${PATH}" ;;
+            esac
+            export PATH
+            return 0
+        fi
+    done
+}
+
+ensure_dudley_brew() {
+    command -v brew >/dev/null 2>&1 && return 0
+
+    if [[ -n "${DUDLEY_BREW_BOOTSTRAP:-}" ]]; then
+        "$DUDLEY_BREW_BOOTSTRAP"
+        _dudley_add_homebrew_paths
+    else
+        _dudley_add_homebrew_paths
+        command -v brew >/dev/null 2>&1 && return 0
+
+        if command -v ujust >/dev/null 2>&1; then
+            ujust bluefin-cli
+        else
+            local installer
+            installer="$(mktemp)"
+            trap 'rm -f "$installer"' RETURN
+            curl --fail --silent --show-error --location \
+                --proto '=https' --tlsv1.2 \
+                --output "$installer" \
+                "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+            NONINTERACTIVE=1 /bin/bash "$installer"
+        fi
+    fi
+
+    _dudley_add_homebrew_paths
+    if ! command -v brew >/dev/null 2>&1; then
+        echo "ERROR: Homebrew bootstrap completed but brew is not available on PATH" >&2
+        return 1
+    fi
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    ensure_dudley_brew
+fi

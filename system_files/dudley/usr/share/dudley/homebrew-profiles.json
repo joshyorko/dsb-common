@@ -3,7 +3,6 @@
     "default": [
       "action-server",
       "camp",
-      "codex-release",
       "devpod-appindicator-runtime-tools",
       "devpod-linux",
       "devsy",
