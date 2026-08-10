@@ -169,6 +169,11 @@ class PayloadContractTests(unittest.TestCase):
         self.assertIn('dudley action="" target="" mode="":', recipe)
         self.assertIn('run_bundle "dudley-default.Brewfile"', recipe)
         self.assertIn('run_bundle "dudley-ai.Brewfile"', recipe)
+        tools_block = recipe.split("        tools)\n", 1)[1].split(
+            "        extensions)", 1
+        )[0]
+        self.assertIn('run_bundle "dudley-default.Brewfile"', tools_block)
+        self.assertNotIn('run_bundle "dudley-ai.Brewfile"', tools_block)
         for target in ("cli", "dev", "ide", "fonts", "k8s", "all"):
             self.assertIn(target, recipe)
         self.assertIn("DUDLEY_BREW_HELPER", recipe)

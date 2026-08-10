@@ -56,7 +56,7 @@ dudley action="" target="" mode="":
         local force="${1:-}"
 
         [[ -x "$EXTENSIONS_HOOK" ]] || {
-            echo "ERROR: $EXTENSIONS_HOOK not found or not executable"
+            echo "ERROR: $EXTENSIONS_HOOK not found or not executable" >&2
             exit 1
         }
         if [[ "$force" == "force" ]]; then
@@ -153,7 +153,6 @@ dudley action="" target="" mode="":
             ;;
         tools)
             run_bundle "dudley-default.Brewfile"
-            run_bundle "dudley-ai.Brewfile"
             ;;
         extensions)
             run_extensions "${TARGET:-$MODE}"
