@@ -1,0 +1,17 @@
+# Compatibility Kubernetes and cloud-native profile.
+tap "k0sproject/tap"
+
+brew "cdk8s"
+brew "dagger"
+brew "grype"
+brew "hadolint"
+brew "helm"
+brew "k0sproject/tap/k0sctl"
+brew "k3sup"
+brew "k9s"
+brew "kind"
+brew "kubectx"
+brew "kubernetes-cli"
+brew "rancher-cli"
+brew "syft"
+brew "trivy"

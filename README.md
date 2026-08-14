@@ -13,7 +13,7 @@ The image published to `ghcr.io/joshyorko/dsb-common` exports exactly two namesp
 
 Consumers should copy from those paths explicitly rather than assuming flattened `/usr` or `/etc` paths inside the OCI layer.
 
-The machine-readable Dudley payload contract lives at `contract/dudley-payload.v1.json`. It lists every file under `system_files/`, its final target path, kind, and selectors for consumers such as Bluefin/Fedora-family and future Ubuntu-family adapters. Use `scripts/install-payload.py --profile bluefin --dest <root>` for full current Dudley/Bluefin payload installation, and `scripts/install-payload.py --profile ubuntu --dest <root>` for the portable Ubuntu feasibility payload.
+The machine-readable Dudley payload contract lives at `contract/dudley-payload.v1.json`. It lists every file under `system_files/`, its final target path, kind, and selectors for Bluefin, Dakota, and Ubuntu-family adapters. Use `scripts/install-payload.py --profile bluefin --dest <root>` for the Bluefin payload, `--profile dakota` for the portable Dakota/Ghostty payload, and `--profile ubuntu` for the portable Ubuntu feasibility payload. Ownership and applicability for the user-facing parity surface are reviewed in `contract/dudley-parity.v1.json`.
 
 ## Repository Layout
 
@@ -39,9 +39,17 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 - `usr/share/dudley/homebrew-profiles.json`
 - `usr/share/ublue-os/just/60-dudley.just`
 - `usr/share/ublue-os/just/update.just`
+- `usr/share/dudley/terminal-contract.json` and native terminal adapters
 - `usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh`
 - `usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh`
 - `usr/share/ublue-os/vscode-extensions.list`
+
+The shared MOTD payload lives under `system_files/shared/etc/`: it supplies the
+uWelcome configuration, uMotd tags, and Bash/Zsh and Fish login hooks. The
+terminal contract is emulator-neutral; Bluefin uses the Ptyxis adapter while
+Dakota consumes the native Ghostty adapter. Final consumer images remain
+responsible for installing/activating the appropriate emulator and MOTD
+runtime.
 
 The Dudley wallpaper photos from `joshyorko/dudleys-second-bedroom/custom_wallpapers` are bundled here so the wallpaper switcher works without consumer repos carrying duplicate image assets.
 
@@ -53,12 +61,17 @@ When migrating content from `dudleys-second-bedroom`, place reusable non-branded
 
 Dudley's portable developer experience lives here instead of in a final product image. It tracks the user-space parts of Bluefin DX and Project Bluefin common that can travel cleanly across current Bluefin-based images and future Dakota-style assembly:
 
-- curated CLI, development, IDE, font, and Kubernetes tooling in `dudley-default.Brewfile`
-- extra Nerd Fonts from Bluefin common
+- curated workstation tooling in `dudley-default.Brewfile`
+- compatibility profiles for `cli`, `dev`, `ide`, `fonts`, and `k8s`
+- live metadata and Linux artifact validation for every shipped `tap`, `brew`, and `cask`
 - DX Flatpaks in `dudley-dx.preinstall`
 - VS Code defaults use JetBrains Mono 16, with a one-time migration for the previous generic monospace settings
 - existing Bluefin user profiles re-enable the upstream top-panel menu for system monitoring, settings, applications, documentation, and Ask Bluefin
-- `ujust dudley` as the user-space setup entrypoint
+- `ujust dudley` as the user-space setup entrypoint, with compatibility commands
+  such as `ujust dudley brew cli`, `ujust dudley brew dev`, `ujust dudley brew
+  ide`, `ujust dudley brew fonts`, `ujust dudley brew k8s`, `ujust dudley brew
+  all`, `ujust dudley extensions`, `ujust dudley tools`, `ujust dudley list`,
+  and `ujust dudley info`
 - opt-in AI tooling through `dudley-ai.Brewfile` and `ujust dudley ai`
 - profile and build details through `ujust dudley info`
 
@@ -91,7 +104,7 @@ Intended copy precedence:
 
 The repository ships only the minimal workflow needed to build and publish the OCI layer.
 
-- Pull requests validate shell payloads, Brewfile syntax, Flatpak preinstall files, just recipes, and the Chrome repo contract.
+- Pull requests validate shell payloads, Brewfile syntax, live Homebrew metadata and Linux artifacts, Flatpak preinstall files, just recipes, and the Chrome repo contract.
 - Pull requests validate the v1 payload contract and profile installer so every shipped file is represented exactly once.
 - Pull requests to `main` build the image for validation.
 - Pushes to `main` publish `ghcr.io/joshyorko/dsb-common`.

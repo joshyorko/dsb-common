@@ -11,6 +11,7 @@ on:
       - "system_files/**"
       - "contract/**"
       - "scripts/install-payload.py"
+      - "scripts/validate-brewfiles.py"
       - "tests/**"
       - "AGENTS.md"
       - ".github/workflows/validate-payload.yml"
@@ -58,6 +59,12 @@ jobs:
               ruby -c "$brewfile"
               echo "::endgroup::"
             done
+
+      - name: Validate live Brew metadata and Linux artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-brewfiles.py --network --artifacts
 
       - name: Validate Flatpak preinstall files
         shell: bash
