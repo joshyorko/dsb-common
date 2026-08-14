@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import re
 import shlex
@@ -36,6 +37,15 @@ DUDLEY_BUILD_INFO = DUDLEY_SYSTEM_FILES / "usr/bin/dudley-build-info"
 TERMINAL_CONTRACT = DUDLEY_SYSTEM_FILES / "usr/share/dudley/terminal-contract.json"
 GHOSTTY_CONFIG = DUDLEY_SYSTEM_FILES / "usr/share/dudley/terminal/ghostty.conf"
 PTYXIS_CONFIG = DUDLEY_SYSTEM_FILES / "usr/share/dudley/terminal/ptyxis.dconf"
+VALIDATOR_PATH = ROOT / "scripts/validate-brewfiles.py"
+
+
+def load_brewfile_validator():
+    spec = importlib.util.spec_from_file_location("validate_brewfiles", VALIDATOR_PATH)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def brewfile_entries(path: Path, directive: str) -> set[str]:
@@ -653,6 +663,21 @@ printf 'extensions\\n' >> {brew_log_path}
 
             subprocess.run(["bash", str(hook)], cwd=ROOT, env=env, check=True)
             self.assertEqual(1, len(log.read_text(encoding="utf-8").splitlines()))
+
+
+class BrewfileValidatorTests(unittest.TestCase):
+    def test_resolves_architecture_ternary_in_url(self) -> None:
+        validator = load_brewfile_validator()
+        source = '''
+          arch arm: "arm64", intel: "x64"
+          version "1.2.3"
+          url "https://example.test/tool-#{(arch == :arm64) ? "arm64" : "x64"}.tar.gz"
+        '''
+
+        self.assertEqual(
+            ["https://example.test/tool-x64.tar.gz"],
+            validator.resolved_urls(source),
+        )
 
 
 if __name__ == "__main__":

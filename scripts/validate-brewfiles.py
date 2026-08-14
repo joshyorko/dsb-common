@@ -19,9 +19,15 @@ DECLARATION = re.compile(
     r'^\s*(?P<kind>tap|brew|cask)\s+"(?P<token>[^"]+)"(?:\s*(?:#.*)?)?$'
 )
 VERSION = re.compile(r'\bversion\s+"([^"]+)"')
-URL = re.compile(r'\burl\s+"([^"]+)"')
+URL = re.compile(r'\burl\s+"((?:#\{[^}]*\}|[^"])*)"')
 SHA256 = re.compile(r"\bsha256\b")
 INTERPOLATION = re.compile(r"#\{([^}]+)\}")
+TERNARY = re.compile(
+    r"^\(\s*(?P<key>[a-z][\w.]*)\s*==\s*"
+    r"(?P<comparison>:[A-Za-z]\w*|['\"][^'\"]+['\"])\s*\)\s*\?\s*"
+    r"(?P<true>['\"][^'\"]*['\"])\s*:\s*"
+    r"(?P<false>['\"][^'\"]*['\"])$"
+)
 PLACEHOLDER = re.compile(r"\b(?:TODO|FIXME|placeholder|example)\b", re.IGNORECASE)
 
 
@@ -232,10 +238,20 @@ def resolved_urls(source: str) -> list[str]:
     for match in URL.finditer(source):
         url = match.group(1)
         for expression in INTERPOLATION.findall(url):
-            if expression not in values or not values[expression]:
+            value = values.get(expression, "")
+            ternary = TERNARY.match(expression)
+            if ternary:
+                comparison = ternary.group("comparison").strip(":'\"")
+                branch = (
+                    "true"
+                    if values.get(ternary.group("key")) == comparison
+                    else "false"
+                )
+                value = ternary.group(branch).strip("'\"")
+            if not value:
                 url = ""
                 break
-            url = url.replace(f"#{{{expression}}}", values[expression])
+            url = url.replace(f"#{{{expression}}}", value)
         if url:
             urls.append(url)
     return urls
