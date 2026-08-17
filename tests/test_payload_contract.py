@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import http.client
 import importlib.util
 import json
 import re
@@ -11,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -38,6 +40,7 @@ TERMINAL_CONTRACT = DUDLEY_SYSTEM_FILES / "usr/share/dudley/terminal-contract.js
 GHOSTTY_CONFIG = DUDLEY_SYSTEM_FILES / "usr/share/dudley/terminal/ghostty.conf"
 PTYXIS_CONFIG = DUDLEY_SYSTEM_FILES / "usr/share/dudley/terminal/ptyxis.dconf"
 VALIDATOR_PATH = ROOT / "scripts/validate-brewfiles.py"
+CONTAINERFILE = ROOT / "Containerfile"
 
 
 def load_brewfile_validator():
@@ -78,6 +81,18 @@ class PayloadContractTests(unittest.TestCase):
         self.assertEqual([], duplicates)
         self.assertEqual(len(declared_sources), len(declared))
         self.assertEqual(actual, declared)
+
+    def test_oci_layer_exports_profile_installer_contract(self) -> None:
+        containerfile = CONTAINERFILE.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "COPY /contract/dudley-payload.v1.json /contract/dudley-payload.v1.json",
+            containerfile,
+        )
+        self.assertIn(
+            "COPY /scripts/install-payload.py /scripts/install-payload.py",
+            containerfile,
+        )
 
     def test_declared_files_exist_and_have_valid_selectors(self) -> None:
         valid_selectors = {
@@ -465,7 +480,12 @@ printf 'extensions\\n' >> {brew_log_path}
 
             self.assertTrue((dest / "usr/share/dudley/terminal-contract.json").is_file())
             self.assertTrue((dest / "usr/share/dudley/terminal/ghostty.conf").is_file())
-            self.assertTrue((dest / "etc/uwelcome/config.json").is_file())
+            uwelcome = json.loads(
+                (dest / "etc/uwelcome/config.json").read_text(encoding="utf-8")
+            )
+            commands = [entry["cmd"] for entry in uwelcome["commands"]]
+            self.assertIn("ujust dudley list", commands)
+            self.assertNotIn("ujust bluefin-cli", commands)
             self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())
             self.assertFalse((dest / "etc/dconf/db/distro.d/99-dudley-terminal-keybindings").exists())
             self.assertFalse((dest / "etc/dconf/db/distro.d/98-dudley-ptyxis").exists())
@@ -678,6 +698,32 @@ class BrewfileValidatorTests(unittest.TestCase):
             ["https://example.test/tool-x64.tar.gz"],
             validator.resolved_urls(source),
         )
+
+    def test_successful_head_probe_does_not_read_artifact_body(self) -> None:
+        validator = load_brewfile_validator()
+        declaration = validator.Declaration(
+            "brew", "demo", Path("demo.Brewfile"), 1
+        )
+        metadata = validator.Metadata(
+            declaration,
+            "https://example.test/demo.rb",
+            'class Demo < Formula\n  url "https://example.test/demo.tar.gz"\nend\n',
+        )
+
+        class HeadResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                raise http.client.IncompleteRead(b"partial")
+
+        with mock.patch.object(
+            validator.urllib.request, "urlopen", return_value=HeadResponse()
+        ):
+            self.assertIsNone(validator.validate_artifact(metadata, timeout=1))
 
 
 if __name__ == "__main__":
