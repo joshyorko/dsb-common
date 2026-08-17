@@ -243,7 +243,7 @@ class PayloadContractTests(unittest.TestCase):
         names = {entry["name"] for entry in manifest["entries"]}
         self.assertIn("dudley brew cli|dev|ide|fonts|k8s|all", names)
         self.assertIn("Ghostty native adapter", names)
-        self.assertIn("uwelcome configuration and umotd tags", names)
+        self.assertIn("umotd configuration and tags", names)
 
     def test_terminal_contract_is_rendered_for_both_emulators(self) -> None:
         contract = json.loads(TERMINAL_CONTRACT.read_text(encoding="utf-8"))
@@ -268,7 +268,7 @@ class PayloadContractTests(unittest.TestCase):
 
     def test_shared_motd_payload_matches_upstream_contract(self) -> None:
         config = json.loads(
-            (SHARED_SYSTEM_FILES / "etc/uwelcome/config.json").read_text(
+            (SHARED_SYSTEM_FILES / "etc/umotd/config.json").read_text(
                 encoding="utf-8"
             )
         )
@@ -277,7 +277,7 @@ class PayloadContractTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(["umotd"], config["motd"]["commands"])
+        self.assertIn("umotd toggle", {entry["cmd"] for entry in config["commands"]})
         self.assertEqual(
             {
                 "https://issues.projectbluefin.io/",
@@ -289,11 +289,11 @@ class PayloadContractTests(unittest.TestCase):
         self.assertEqual(
             {"bluefin", "gnome", "vscode", "containers"}, set(tags["tags"])
         )
-        hook = (SHARED_SYSTEM_FILES / "etc/profile.d/uwelcome.sh").read_text(
+        hook = (SHARED_SYSTEM_FILES / "etc/profile.d/umotd.sh").read_text(
             encoding="utf-8"
         )
-        self.assertIn("uwelcome", hook)
-        self.assertIn("no-show-user-motd", hook)
+        self.assertIn("umotd", hook)
+        self.assertNotIn("uwelcome", hook)
 
     def test_dudley_build_info_is_nonfatal_before_final_assembly(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -480,10 +480,10 @@ printf 'extensions\\n' >> {brew_log_path}
 
             self.assertTrue((dest / "usr/share/dudley/terminal-contract.json").is_file())
             self.assertTrue((dest / "usr/share/dudley/terminal/ghostty.conf").is_file())
-            uwelcome = json.loads(
-                (dest / "etc/uwelcome/config.json").read_text(encoding="utf-8")
+            umotd = json.loads(
+                (dest / "etc/umotd/config.json").read_text(encoding="utf-8")
             )
-            commands = [entry["cmd"] for entry in uwelcome["commands"]]
+            commands = [entry["cmd"] for entry in umotd["commands"]]
             self.assertIn("ujust dudley list", commands)
             self.assertNotIn("ujust bluefin-cli", commands)
             self.assertTrue((dest / "usr/share/ublue-os/just/60-dudley.just").is_file())

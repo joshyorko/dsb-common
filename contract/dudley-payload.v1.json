@@ -308,8 +308,8 @@
       "selectors": ["portable", "runtime-user"]
     },
     {
-      "source": "system_files/shared/etc/profile.d/uwelcome.sh",
-      "target": "/etc/profile.d/uwelcome.sh",
+      "source": "system_files/shared/etc/profile.d/umotd.sh",
+      "target": "/etc/profile.d/umotd.sh",
       "kind": "executable",
       "selectors": ["portable", "runtime-user"]
     },
@@ -320,8 +320,8 @@
       "selectors": ["portable", "runtime-user"]
     },
     {
-      "source": "system_files/shared/etc/uwelcome/config.json",
-      "target": "/etc/uwelcome/config.json",
+      "source": "system_files/shared/etc/umotd/config.json",
+      "target": "/etc/umotd/config.json",
       "kind": "config",
       "selectors": ["bluefin", "ubuntu"]
     },
@@ -332,8 +332,8 @@
       "selectors": ["portable", "runtime-user"]
     },
     {
-      "source": "system_files/dudley/etc/uwelcome/dakota.json",
-      "target": "/etc/uwelcome/config.json",
+      "source": "system_files/dudley/etc/umotd/dakota.json",
+      "target": "/etc/umotd/config.json",
       "kind": "config",
       "selectors": ["dakota"]
     }
