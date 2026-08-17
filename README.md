@@ -6,10 +6,12 @@ This repository is intentionally limited to shared layer content. It does not ow
 
 ## Published Layer Contract
 
-The image published to `ghcr.io/joshyorko/dsb-common` exports exactly two namespaced paths:
+The image published to `ghcr.io/joshyorko/dsb-common` exports four namespaced paths:
 
 - `/system_files/shared`
 - `/system_files/dudley`
+- `/contract/dudley-payload.v1.json`
+- `/scripts/install-payload.py`
 
 Consumers should copy from those paths explicitly rather than assuming flattened `/usr` or `/etc` paths inside the OCI layer.
 
@@ -44,8 +46,10 @@ Dudley-opinionated content that should follow the Dudley flavor across consuming
 - `usr/share/ublue-os/user-setup.hooks.d/20-dudley-vscode-extensions.sh`
 - `usr/share/ublue-os/vscode-extensions.list`
 
-The shared MOTD payload lives under `system_files/shared/etc/`: it supplies the
-uWelcome configuration, uMotd tags, and Bash/Zsh and Fish login hooks. The
+The MOTD payload supplies uWelcome configuration, uMotd tags, and Bash/Zsh and
+Fish login hooks. Bluefin uses the shared command surface; Dakota selects its
+native configuration, which routes setup help through `ujust dudley list`
+instead of the intentionally unavailable `ujust bluefin-cli`. The
 terminal contract is emulator-neutral; Bluefin uses the Ptyxis adapter while
 Dakota consumes the native Ghostty adapter. Final consumer images remain
 responsible for installing/activating the appropriate emulator and MOTD

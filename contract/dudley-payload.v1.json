@@ -323,13 +323,19 @@
       "source": "system_files/shared/etc/uwelcome/config.json",
       "target": "/etc/uwelcome/config.json",
       "kind": "config",
-      "selectors": ["portable", "runtime-user"]
+      "selectors": ["bluefin", "ubuntu"]
     },
     {
       "source": "system_files/shared/usr/share/fish/vendor_conf.d/fish_greeting.fish",
       "target": "/usr/share/fish/vendor_conf.d/fish_greeting.fish",
       "kind": "config",
       "selectors": ["portable", "runtime-user"]
+    },
+    {
+      "source": "system_files/dudley/etc/uwelcome/dakota.json",
+      "target": "/etc/uwelcome/config.json",
+      "kind": "config",
+      "selectors": ["dakota"]
     }
   ]
 }

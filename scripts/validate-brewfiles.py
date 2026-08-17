@@ -178,6 +178,8 @@ def fetch(url: str, *, timeout: float, method: str = "GET") -> str:
         method=method,
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
+        if method == "HEAD":
+            return ""
         return response.read().decode("utf-8", errors="replace")
 
 
