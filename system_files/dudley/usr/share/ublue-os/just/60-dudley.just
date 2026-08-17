@@ -171,7 +171,7 @@ dudley action="" target="" mode="":
     esac
 
 toggle-user-motd:
-    @uwelcome toggle
+    @umotd toggle
 
 # Dudley already inherits from a developer image, so Bluefin's generic devmode
 # rebase recipe should not synthesize a sibling image name.

@@ -167,17 +167,17 @@
     },
     {
       "area": "motd",
-      "name": "uwelcome configuration and umotd tags",
+      "name": "umotd configuration and tags",
       "status": "shared",
-      "source": "system_files/shared/etc/uwelcome/config.json",
+      "source": "system_files/shared/etc/umotd/config.json",
       "bluefin": "shared",
       "dakota": "shared"
     },
     {
       "area": "motd",
-      "name": "uwelcome login activation",
+      "name": "umotd login activation",
       "status": "shared",
-      "source": "system_files/shared/etc/profile.d/uwelcome.sh",
+      "source": "system_files/shared/etc/profile.d/umotd.sh",
       "bluefin": "shared",
       "dakota": "shared"
     },
@@ -185,7 +185,7 @@
       "area": "shell",
       "name": "Bash/Zsh and Fish interactive greeting hooks",
       "status": "shared",
-      "source": "system_files/shared/etc/profile.d/uwelcome.sh and system_files/shared/usr/share/fish/vendor_conf.d/fish_greeting.fish",
+      "source": "system_files/shared/etc/profile.d/umotd.sh and system_files/shared/usr/share/fish/vendor_conf.d/fish_greeting.fish",
       "bluefin": "shared",
       "dakota": "shared"
     },
