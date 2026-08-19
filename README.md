@@ -71,12 +71,10 @@ Dudley's portable developer experience lives here instead of in a final product 
 - DX Flatpaks in `dudley-dx.preinstall`
 - VS Code defaults use JetBrains Mono 16, with a one-time migration for the previous generic monospace settings
 - existing Bluefin user profiles re-enable the upstream top-panel menu for system monitoring, settings, applications, documentation, and Ask Bluefin
-- `ujust dudley` as the user-space setup entrypoint, with compatibility commands
-  such as `ujust dudley brew cli`, `ujust dudley brew dev`, `ujust dudley brew
-  ide`, `ujust dudley brew fonts`, `ujust dudley brew k8s`, `ujust dudley brew
-  all`, `ujust dudley extensions`, `ujust dudley tools`, `ujust dudley list`,
-  and `ujust dudley info`
-- opt-in AI tooling through `dudley-ai.Brewfile` and `ujust dudley ai`
+- `ujust dudley` as the complete user-space setup entrypoint, with
+  `ujust dudley ai` for opt-in AI tools, `ujust dudley info` for diagnostics,
+  and `ujust dudley list` for command discovery
+- Hauler's stable Linux cask in both the complete and Kubernetes profiles
 - profile and build details through `ujust dudley info`
 
 Fedora/DNF packages, systemd service enablement, Docker/libvirt/incus group creation, BuildStream elements, bootc metadata, and baked browser/package installs remain final-image concerns. Put those in `dudley-os`, Dakota/BuildStream product targets, or sysexts rather than this shared payload layer.

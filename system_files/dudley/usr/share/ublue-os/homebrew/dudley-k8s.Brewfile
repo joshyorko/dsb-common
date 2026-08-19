@@ -1,5 +1,6 @@
 # Compatibility Kubernetes and cloud-native profile.
 tap "k0sproject/tap"
+tap "hauler-dev/tap"
 
 brew "cdk8s"
 brew "dagger"
@@ -15,3 +16,5 @@ brew "kubernetes-cli"
 brew "rancher-cli"
 brew "syft"
 brew "trivy"
+
+cask "hauler-dev/tap/hauler"

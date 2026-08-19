@@ -160,6 +160,7 @@ class PayloadContractTests(unittest.TestCase):
         self.assertTrue({"gh", "kubectl", "podman", "podman-compose"}.isdisjoint(formulae))
         self.assertLessEqual(
             {
+                "hauler-dev/tap/hauler",
                 "joshyorko/tools/action-server",
                 "joshyorko/tools/devpod-linux",
                 "joshyorko/tools/devsy-desktop",
@@ -168,6 +169,9 @@ class PayloadContractTests(unittest.TestCase):
             },
             casks,
         )
+
+        k8s = HOMEBREW_DIR / "dudley-k8s.Brewfile"
+        self.assertIn("hauler-dev/tap/hauler", brewfile_entries(k8s, "cask"))
 
     def test_joshyorko_tools_profiles_follow_classification_policy(self) -> None:
         default = HOMEBREW_DIR / "dudley-default.Brewfile"
@@ -195,13 +199,9 @@ class PayloadContractTests(unittest.TestCase):
         self.assertIn('dudley action="" target="" mode="":', recipe)
         self.assertIn('run_bundle "dudley-default.Brewfile"', recipe)
         self.assertIn('run_bundle "dudley-ai.Brewfile"', recipe)
-        tools_block = recipe.split("        tools)\n", 1)[1].split(
-            "        extensions)", 1
-        )[0]
-        self.assertIn('run_bundle "dudley-default.Brewfile"', tools_block)
-        self.assertNotIn('run_bundle "dudley-ai.Brewfile"', tools_block)
-        for target in ("cli", "dev", "ide", "fonts", "k8s", "all"):
-            self.assertIn(target, recipe)
+        self.assertNotIn("ujust dudley brew", recipe)
+        self.assertNotIn("        dx)", recipe)
+        self.assertNotIn("        tools)", recipe)
         self.assertIn("DUDLEY_BREW_HELPER", recipe)
         self.assertIn("DUDLEY_BREW_DIR", recipe)
         self.assertIn('/usr/bin/dudley-build-info', recipe)
@@ -345,7 +345,7 @@ class PayloadContractTests(unittest.TestCase):
             home.mkdir()
             brew_dir.mkdir()
             brew_bin.mkdir()
-            (brew_dir / "dudley-cli.Brewfile").write_text(
+            (brew_dir / "dudley-default.Brewfile").write_text(
                 'cask "demo-linux"\n', encoding="utf-8"
             )
             bootstrap_log_path = shlex.quote(str(bootstrap_log))
@@ -393,7 +393,7 @@ printf 'extensions\\n' >> {brew_log_path}
                 "DUDLEY_BREW_HELPER": str(ENSURE_BREW),
             }
             result = subprocess.run(
-                [just, "--justfile", str(justfile), "dudley", "brew", "cli"],
+                [just, "--justfile", str(justfile), "dudley"],
                 cwd=ROOT,
                 env=env,
                 check=False,
@@ -403,10 +403,76 @@ printf 'extensions\\n' >> {brew_log_path}
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertIn("bootstrapped", bootstrap_log.read_text(encoding="utf-8"))
             brew_log = log.read_text(encoding="utf-8")
-            self.assertIn(f"bundle --file={brew_dir}/dudley-cli.Brewfile", brew_log)
+            self.assertIn(f"bundle --file={brew_dir}/dudley-default.Brewfile", brew_log)
             self.assertIn("list --cask demo-linux", brew_log)
             self.assertIn("install --cask demo-linux", brew_log)
             self.assertIn("HOMEBREW_NO_ASK=1", (home / ".homebrew/brew.env").read_text())
+
+    def test_homebrew_bootstrap_does_not_depend_on_bluefin_ujust(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            bin_dir = root / "bin"
+            brew_bin = root / "brew-bin"
+            ujust_log = root / "ujust.log"
+            home.mkdir()
+            bin_dir.mkdir()
+            brew_bin.mkdir()
+
+            for command in ("bash", "cat", "chmod", "mktemp", "rm"):
+                (bin_dir / command).symlink_to(shutil.which(command))
+
+            ujust = bin_dir / "ujust"
+            ujust.write_text(
+                f"#!/usr/bin/env bash\nprintf '%s\\n' \"$*\" >> {shlex.quote(str(ujust_log))}\nexit 97\n",
+                encoding="utf-8",
+            )
+            ujust.chmod(0o755)
+
+            curl = bin_dir / "curl"
+            curl.write_text(
+                """#!/usr/bin/env bash
+set -euo pipefail
+output=""
+while (($#)); do
+    if [[ "$1" == "--output" ]]; then
+        output="$2"
+        shift 2
+    else
+        shift
+    fi
+done
+cat > "$output" <<'INSTALLER'
+#!/usr/bin/env bash
+set -euo pipefail
+cat > "$DUDLEY_BREW_BIN/brew" <<'BREW'
+#!/usr/bin/env bash
+exit 0
+BREW
+chmod +x "$DUDLEY_BREW_BIN/brew"
+INSTALLER
+""",
+                encoding="utf-8",
+            )
+            curl.chmod(0o755)
+
+            env = {
+                "HOME": str(home),
+                "PATH": str(bin_dir),
+                "DUDLEY_BREW_BIN": str(brew_bin),
+            }
+            result = subprocess.run(
+                ["bash", str(ENSURE_BREW)],
+                cwd=ROOT,
+                env=env,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertFalse(ujust_log.exists(), "bootstrap invoked Bluefin's ujust recipe")
+            self.assertTrue((brew_bin / "brew").is_file())
 
     def test_homebrew_no_ask_helper_preserves_settings_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
