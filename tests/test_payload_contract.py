@@ -127,6 +127,18 @@ class PayloadContractTests(unittest.TestCase):
         self.assertNotIn("portable", chrome_repo["selectors"])
         self.assertNotIn("ubuntu", chrome_repo["selectors"])
 
+    def test_dakota_has_a_distinct_uwelcome_override(self) -> None:
+        override = next(
+            entry
+            for entry in self.files
+            if entry["source"].endswith("/etc/uwelcome/dakota.json")
+        )
+        self.assertEqual(override["target"], "/etc/uwelcome/config.json")
+        self.assertEqual(override["selectors"], ["dakota"])
+        config = json.loads((ROOT / override["source"]).read_text())
+        self.assertEqual(config["color"], "orange")
+        self.assertTrue(config["greeting"]["prefix"].startswith("🦖 DAKOTA"))
+
     def test_dudley_homebrew_profiles_are_curated(self) -> None:
         brewfiles = {path.name for path in HOMEBREW_DIR.glob("*.Brewfile")}
         self.assertEqual(
