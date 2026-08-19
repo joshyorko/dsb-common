@@ -173,6 +173,16 @@ class PayloadContractTests(unittest.TestCase):
         k8s = HOMEBREW_DIR / "dudley-k8s.Brewfile"
         self.assertIn("hauler-dev/tap/hauler", brewfile_entries(k8s, "cask"))
 
+    def test_dakota_keeps_its_native_motd_hook(self) -> None:
+        umotd_hook = next(
+            entry
+            for entry in self.files
+            if entry["source"] == "system_files/shared/etc/profile.d/umotd.sh"
+        )
+        self.assertNotIn("portable", umotd_hook["selectors"])
+        self.assertNotIn("runtime-user", umotd_hook["selectors"])
+        self.assertEqual(["bluefin"], umotd_hook["selectors"])
+
     def test_joshyorko_tools_profiles_follow_classification_policy(self) -> None:
         default = HOMEBREW_DIR / "dudley-default.Brewfile"
         ai = HOMEBREW_DIR / "dudley-ai.Brewfile"

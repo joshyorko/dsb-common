@@ -311,7 +311,7 @@
       "source": "system_files/shared/etc/profile.d/umotd.sh",
       "target": "/etc/profile.d/umotd.sh",
       "kind": "executable",
-      "selectors": ["portable", "runtime-user"]
+      "selectors": ["bluefin"]
     },
     {
       "source": "system_files/shared/etc/ublue-os/tags.json",
