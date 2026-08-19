@@ -1,7 +1,7 @@
 # Dudley runtime setup
 #
 #   ujust dudley
-#   ujust dudley brew cli
+#   ujust dudley ai
 #   ujust dudley extensions force
 #   ujust dudley info
 
@@ -66,15 +66,6 @@ dudley action="" target="" mode="":
         fi
     }
 
-    run_all_brewfiles() {
-        run_bundle "dudley-default.Brewfile"
-        run_bundle "dudley-cli.Brewfile"
-        run_bundle "dudley-dev.Brewfile"
-        run_bundle "dudley-ide.Brewfile"
-        run_bundle "dudley-fonts.Brewfile"
-        run_bundle "dudley-k8s.Brewfile"
-    }
-
     show_list() {
         echo "Available Dudley Brewfiles:"
         if [[ -d "$BREW_DIR" ]]; then
@@ -89,10 +80,8 @@ dudley action="" target="" mode="":
             "" \
             "Commands:" \
             "  ujust dudley                 Install the complete Dudley profile" \
-            "  ujust dudley brew <profile>  Install cli, dev, ide, fonts, k8s, or all" \
             "  ujust dudley ai              Install the opt-in AI profile" \
             "  ujust dudley extensions      Install or update VS Code extensions" \
-            "  ujust dudley tools           Install the curated Joshyorko tools" \
             "  ujust dudley info            Show build and profile information"
     }
 
@@ -106,53 +95,13 @@ dudley action="" target="" mode="":
         fi
     }
 
-    setup_target() {
-        case "$1" in
-            all|"")
-                run_all_brewfiles
-                run_extensions
-                ;;
-            cli)
-                run_bundle "dudley-cli.Brewfile"
-                ;;
-            dev)
-                run_bundle "dudley-dev.Brewfile"
-                run_extensions
-                ;;
-            ide)
-                run_bundle "dudley-ide.Brewfile"
-                ;;
-            fonts)
-                run_bundle "dudley-fonts.Brewfile"
-                ;;
-            k8s)
-                run_bundle "dudley-k8s.Brewfile"
-                ;;
-            ai)
-                run_bundle "dudley-ai.Brewfile"
-                ;;
-            *)
-                echo "ERROR: expected profile: cli|dev|ide|fonts|k8s|all|ai"
-                exit 1
-                ;;
-        esac
-    }
-
     case "$ACTION" in
         ""|setup)
-            setup_target "${TARGET:-all}"
-            ;;
-        brew)
-            setup_target "$TARGET"
+            run_bundle "dudley-default.Brewfile"
+            run_extensions
             ;;
         ai)
-            setup_target ai
-            ;;
-        dx)
-            setup_target all
-            ;;
-        tools)
-            run_bundle "dudley-default.Brewfile"
+            run_bundle "dudley-ai.Brewfile"
             ;;
         extensions)
             run_extensions "${TARGET:-$MODE}"

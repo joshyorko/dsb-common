@@ -7,12 +7,13 @@ _dudley_add_homebrew_paths() {
 
     if [[ -n "${DUDLEY_BREW_BIN:-}" ]]; then
         candidates+=("$DUDLEY_BREW_BIN")
+    else
+        candidates+=(
+            "$HOME/.linuxbrew/bin"
+            "/home/linuxbrew/.linuxbrew/bin"
+            "/opt/homebrew/bin"
+        )
     fi
-    candidates+=(
-        "$HOME/.linuxbrew/bin"
-        "/home/linuxbrew/.linuxbrew/bin"
-        "/opt/homebrew/bin"
-    )
 
     for path in "${candidates[@]}"; do
         if [[ -x "$path/brew" ]]; then
@@ -36,18 +37,14 @@ ensure_dudley_brew() {
         _dudley_add_homebrew_paths
         command -v brew >/dev/null 2>&1 && return 0
 
-        if command -v ujust >/dev/null 2>&1; then
-            ujust bluefin-cli
-        else
-            local installer
-            installer="$(mktemp)"
-            trap 'rm -f "$installer"' RETURN
-            curl --fail --silent --show-error --location \
-                --proto '=https' --tlsv1.2 \
-                --output "$installer" \
-                "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
-            NONINTERACTIVE=1 /bin/bash "$installer"
-        fi
+        local installer
+        installer="$(mktemp)"
+        trap 'rm -f "$installer"' RETURN
+        curl --fail --silent --show-error --location \
+            --proto '=https' --tlsv1.2 \
+            --output "$installer" \
+            "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+        NONINTERACTIVE=1 /bin/bash "$installer"
     fi
 
     _dudley_add_homebrew_paths

@@ -1,6 +1,7 @@
 # Curated default Dudley workstation profile
 tap "brunoborges/tap"
 tap "buildpacks/tap"
+tap "hauler-dev/tap"
 tap "joshyorko/tools"
 tap "k0sproject/tap"
 tap "ublue-os/tap"
@@ -76,6 +77,7 @@ brew "joshyorko/tools/devsy"
 brew "joshyorko/tools/fizzy-cli-master"
 
 cask "joshyorko/tools/action-server"
+cask "hauler-dev/tap/hauler"
 cask "joshyorko/tools/devpod-linux"
 cask "joshyorko/tools/devsy-desktop"
 cask "joshyorko/tools/rcc"
