@@ -15,7 +15,7 @@ The image published to `ghcr.io/joshyorko/dsb-common` exports four namespaced pa
 
 Consumers should copy from those paths explicitly rather than assuming flattened `/usr` or `/etc` paths inside the OCI layer.
 
-The machine-readable Dudley payload contract lives at `contract/dudley-payload.v1.json`. It lists every file under `system_files/`, its final target path, kind, and selectors for Bluefin, Dakota, and Ubuntu-family adapters. Use `scripts/install-payload.py --profile bluefin --dest <root>` for the Bluefin payload, `--profile dakota` for the portable Dakota/Ghostty payload, and `--profile ubuntu` for the portable Ubuntu feasibility payload. Ownership and applicability for the user-facing parity surface are reviewed in `contract/dudley-parity.v1.json`.
+The machine-readable Dudley payload contract lives at `contract/dudley-payload.v1.json`. It lists every file under `system_files/`, its final target path, kind, and selectors for Bluefin, Dakota, and Ubuntu-family adapters. Use `scripts/install-payload.py --profile bluefin --dest <root>` for the Bluefin payload, `--profile dakota` for the portable Dakota/Ghostty payload with Dudley's GNOME wallpapers, and `--profile ubuntu` for the portable Ubuntu feasibility payload. Ownership and applicability for the user-facing parity surface are reviewed in `contract/dudley-parity.v1.json`.
 
 ## Repository Layout
 
