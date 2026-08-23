@@ -203,7 +203,7 @@
       "status": "shared",
       "source": "system_files/dudley/usr/share/backgrounds/dudley/ and system_files/dudley/usr/share/glib-2.0/schemas/",
       "bluefin": "shared",
-      "dakota": "intentionally-omitted"
+      "dakota": "shared"
     },
     {
       "area": "bazaar",

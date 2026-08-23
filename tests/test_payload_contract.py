@@ -578,15 +578,29 @@ INSTALLER
             self.assertFalse((dest / "etc/dconf/db/distro.d/99-dudley-terminal-keybindings").exists())
             self.assertFalse((dest / "etc/dconf/db/distro.d/98-dudley-ptyxis").exists())
             self.assertFalse((dest / "usr/share/dudley/terminal/ptyxis.dconf").exists())
-            self.assertFalse((dest / "etc/xdg/autostart/dudley-random-wallpaper.desktop").exists())
-            self.assertFalse((dest / "usr/bin/dudley-random-wallpaper").exists())
+            self.assertTrue((dest / "etc/xdg/autostart/dudley-random-wallpaper.desktop").is_file())
+            self.assertTrue((dest / "usr/bin/dudley-random-wallpaper").is_file())
             self.assertFalse(
                 (dest / "usr/share/ublue-os/user-setup.hooks.d/12-dudley-desktop-parity.sh").exists()
             )
             self.assertFalse(
                 (dest / "usr/share/ublue-os/user-setup.hooks.d/15-dudley-bazaar-launcher.sh").exists()
             )
-            self.assertFalse((dest / "usr/share/backgrounds/dudley").exists())
+            self.assertTrue(
+                (
+                    dest
+                    / "usr/share/backgrounds/dudley/dudley-os-clever-girl-golden-bedroom.png"
+                ).is_file()
+            )
+            self.assertTrue(
+                (dest / "usr/share/gnome-background-properties/dudley.xml").is_file()
+            )
+            self.assertTrue(
+                (
+                    dest
+                    / "usr/share/glib-2.0/schemas/zz0-dudley-background.gschema.override"
+                ).is_file()
+            )
 
     def test_gnome_wallpaper_catalog_covers_dudley_payload(self) -> None:
         catalog = ET.parse(WALLPAPER_CATALOG)

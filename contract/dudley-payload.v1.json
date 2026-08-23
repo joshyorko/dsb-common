@@ -4,7 +4,7 @@
   "profiles": {
     "bluefin": ["portable", "bluefin", "fedora-family", "gnome"],
     "ubuntu": ["portable", "ubuntu", "gnome"],
-    "dakota": ["portable", "runtime-user", "dakota"]
+    "dakota": ["portable", "runtime-user", "dakota", "gnome"]
   },
   "files": [
     {
