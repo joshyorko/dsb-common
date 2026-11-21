@@ -52,9 +52,9 @@ Dakota and Fedora Bluefin own the system Podman lifecycle.
 Keep `dudley-ai.Brewfile` opt-in. Retain its current AI tools and add these
 `joshyorko/tools` packages:
 
-- casks: `buzz-linux` and `t3-code-linux`;
+- casks: `buzz-linux`;
 - formulae: `antigravity-cli`, `fizzy-popper-self-hosted`,
-  `fizzy-symphony`, and `t3code-cli-main`.
+  and `fizzy-symphony`.
 
 Exclude packages Josh manages manually:
 
