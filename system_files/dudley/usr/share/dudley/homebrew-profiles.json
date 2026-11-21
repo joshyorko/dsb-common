@@ -13,11 +13,7 @@
     ],
     "ai": [
       "antigravity-cli",
-      "buzz-linux",
-      "fizzy-popper-self-hosted",
-      "fizzy-symphony",
-      "t3-code-linux",
-      "t3code-cli-main"
+      "buzz-linux"
     ],
     "manual": [
       "codex-desktop",
