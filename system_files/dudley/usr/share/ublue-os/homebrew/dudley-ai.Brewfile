@@ -19,8 +19,6 @@ brew "ramalama"
 brew "ublue-os/tap/linux-mcp-server"
 brew "whisper-cpp"
 brew "joshyorko/tools/antigravity-cli"
-brew "joshyorko/tools/fizzy-popper-self-hosted"
-brew "joshyorko/tools/fizzy-symphony"
 
 cask "claude-code"
 cask "codex"

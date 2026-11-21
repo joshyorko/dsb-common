@@ -53,8 +53,7 @@ Keep `dudley-ai.Brewfile` opt-in. Retain its current AI tools and add these
 `joshyorko/tools` packages:
 
 - casks: `buzz-linux`;
-- formulae: `antigravity-cli`, `fizzy-popper-self-hosted`,
-  and `fizzy-symphony`.
+- formulae: `antigravity-cli`.
 
 Exclude packages Josh manages manually:
 
